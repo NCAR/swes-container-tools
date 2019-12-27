@@ -1,0 +1,40 @@
+#!/bin/sh
+PROG=echo-n
+DESC="A portable \"echo\" command that suppresses the final newline"
+USAGE1="$PROG [args...]"
+USAGE2="$PROG -h|--help"
+HELP_TEXT="
+        This script presents an easy way to suppress the terminal newline on
+        the \"echo\" built-in command without having to know what flavor of
+        shell you are using.
+"
+
+case $1 in
+    -h|--help)
+        cat <<EOF
+NAME
+        $PROG - $DESC
+
+SYNOPSIS
+        $USAGE1
+        $USAGE2
+
+DESCRIPTION$HELP_TEXT
+EOF
+        exit 0 ;;
+esac
+
+SCRIPTDIR=`cd \`dirname $0\`; pwd`
+CONFIGFILE="${SCRIPTDIR}/.swes-container-tools.rc"
+if [ ! -f ${CONFIGFILE} ] ; then
+    ${SCRIPTDIR}/configure-swes-container-tools || exit 1
+fi
+. $CONFIGFILE
+
+if [ ":$ECHO_N" = ":n" ] ; then
+    echo -n "$@"
+elif [ ":$ECHO_N" = ":c" ] ; then
+    echo "$@\c"
+else
+    echo "$@"
+fi

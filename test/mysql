@@ -1,0 +1,25 @@
+#!/bin/sh
+# mysql test fake
+ERROR_SIM_MARKER=$TMPDIR/mysql-error-sim
+
+read input
+if [ ":$input" = ":show tables" ] ; then
+    if [ -f $ERROR_SIM_MARKER ] ; then
+        echo "Simulated error" >&2
+        exit 1
+    fi
+    echo "test"
+    exit 0
+fi
+echo "Args: $@"
+for arg in "$@" ; do
+    case $arg in
+      --defaults-extra-file=*)
+        f=`expr ":$arg" : ':--defaults-extra-file=\(.*\)'`
+        sed -e 's/^\(.*\)/cnf: \1/' $f ;;
+    esac
+
+done
+
+exit 0
+

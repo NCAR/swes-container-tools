@@ -1,0 +1,39 @@
+#!/bin/sh
+PROG=random
+DESC="Generate random string of characters in base64 alphabet"
+USAGE1="$PROG [bytes]"
+USAGE2="$PROG -h|--help"
+HELP_TEXT="
+        This script prints a random string of characters from the set
+        [a-zA-Z0-9+/], optionally with a given number of bytes of random data
+        (default 32).
+
+        Note that the byte length is not the same as the length of the output
+        string, since the random bytes are mapped to a 64-bit alphabet; the
+        default length of the output string is 43 characters.
+"
+
+NBYTES=32
+
+case $1 in
+    -h|--help)
+        cat <<EOF
+NAME
+        $PROG - $DESC
+
+SYNOPSIS
+        $USAGE1
+        $USAGE2
+
+DESCRIPTION$HELP_TEXT
+EOF
+        exit 0 ;;
+    [0-9]*)
+        NBYTES=`expr "$1" : '\([1-9][0-9]*\)$'`
+        if [ ":$NBYTES" = ":" ] ; then
+            echo "$PROG: argument must be a positive integer" >&2
+            exit 1
+        fi ;;
+esac
+
+head -c $NBYTES /dev/urandom | base64 | sed 's/=*$//'

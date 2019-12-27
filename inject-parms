@@ -1,0 +1,155 @@
+#!/bin/sh
+PROG=inject-parms
+DESC="Inject parameter values into template files"
+USAGE1="$PROG [--force] input output"
+USAGE2="$PROG -h|--help"
+HELP_TEXT="
+        Given one or more input files containing parameter reference strings of
+        the form \"$parmname\" or \"${parmname}\", and/or command interpolation
+        strings of the form \"\`command\'\", use \"parmdb\" parameters to
+        replace the strings with parameter values or command output,
+        respectively and write an output file for each input file.
+
+        Substitutions are processed exactly as if the input file contents
+        were in a shell here-document and all parmdb parameters were
+        environment variables.
+
+        By default, $PROG will not overwrite an existing file; if the --force
+        option is given, it will.
+
+        $PROG takes two arguments. The first argument in an input file or
+        directory, and the second is an output file or directory. The second
+        argument cannot be a file if an input directory is specified.
+
+        If the first argument is a file, and an output directory is specified,
+        the output file will have the basename of the input file.
+
+        If an input directory is specified, every file (recursively) under
+        that directory is used as an input file and the input directory is
+        structure is copied to the output directory tree.
+
+ENVIRONMENT
+        PARM_DB
+            The path of the directory to use as the object store. Each
+            parameter is a file in the directory.
+"
+SCRIPTDIR=`cd \`dirname $0\`; pwd`
+USAGE="Usage:
+  $USAGE1
+  $USAGE2
+"    
+
+INARG=
+OUTARG=
+NO_OVERWRITE=true
+while [ $# != 0 ] ; do
+    arg="$1"
+    shift
+    case $arg in
+        -h|--help)
+            cat <<EOF
+NAME
+        $PROG - $DESC
+
+SYNOPSIS
+        $USAGE1
+        $USAGE2
+
+DESCRIPTION$HELP_TEXT
+EOF
+            exit 1 ;;
+
+        --force)
+            NO_OVERWRITE=false ;;
+
+        -*)
+            echo "$PROG: invalid option: $arg" >&2
+            echo "$USAGE" >&2
+            exit 1 ;;
+
+        *)
+            INARG="${arg}"
+            OUTARG="$1"
+            break ;;
+    esac
+done
+
+if [ ":${PARM_DB}" = ":" ] ; then
+    echo "$PROG: environment variable PARM_DB must be set" >&2
+    exit 1
+fi
+if [ ! -d "${PARM_DB}" ] ; then
+    echo "$PROG: ${PARM_DB}: not a directory" >&2
+    exit 1
+fi
+if [ ! -x "${SCRIPTDIR}/parmdb" ] ; then
+    echo "$PROG: cannot find parmdb utility" >&2
+    exit 1
+fi
+
+if [ ":$INARG" = ":" ] || [ ":$OUTARG" = ":" ] ; then
+    echo "$PROG: input and output arguments are required" >&2    
+    echo "$USAGE" >&2
+    exit 1
+fi
+
+OUTPATH=
+if [ -f "$INARG" ] ; then
+    infiles="$INARG"
+    if [ -d "$OUTARG" ] || [ ! -e "$OUTARG" ] ; then
+        b=`basename ${INARG}`
+        OUTPATH="${OUTARG}/${b}"
+    else
+        OUTPATH="$OUTARG"
+    fi
+elif [ -d "$INARG" ] ; then
+    if [ -f "$OUTARG" ] ; then
+        echo "$PROG: $OUTARG: output file not allowed when input argument is a directory" >&2
+        exit 1
+    fi
+    startdir=`pwd`
+    cd ${INARG} || exit 1
+    infiles=`find -L . -type f -print | sed 's:^./::'`
+    cd ${startdir} || exit 1
+else
+    echo "$PROG: $INARG: no such file or directory" >&2
+fi
+
+RAND=`random 8 | tr / =`
+TMPFILE=/tmp/inject-parms$RAND
+trap "rm -f $TMPFILE ; exit 1" 1 2 13 15
+echo "#!/bin/sh" >$TMPFILE
+chmod 700 $TMPFILE
+EOFMARK="EOF_$RAND"
+for infile in ${infiles} ; do
+    if [ -d "$INARG" ] ; then
+        inpath="${INARG}/${infile}"
+    else
+        inpath="${INARG}"
+    fi
+    if [ ":$OUTPATH" = ":" ] ; then
+        OUTPATH="${OUTARG}/${infile}"
+    fi
+    outdir=`dirname "$OUTPATH"`
+
+    if [ -e "$OUTPATH" ] && $NO_OVERWRITE ; then
+        echo "$PROG: $OUTPATH: file already exists" >&2
+    else
+        if [ ! -d "$outdir" ] ; then
+            mkdir -p "$outdir"
+        fi
+        echo "cat <<$EOFMARK >${OUTPATH}"
+        cat "${inpath}"
+        echo "$EOFMARK"
+    fi
+done >>$TMPFILE
+${SCRIPTDIR}/parmdb --run $TMPFILE
+rc=$?
+rm -f $TMPFILE
+trap "" 0
+exit $rc
+
+
+
+
+

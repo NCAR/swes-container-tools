@@ -1,0 +1,115 @@
+#!/bin/sh
+PROG=mysql
+DESC="Wrapper script for mysql client"
+USAGE1="$PROG mysql_opts..."
+USAGE2="$PROG --whelp"
+DBPORT_DFLT=3306
+HELP_TEXT="
+        $PROG is a simple wrapper script that initializes a temporary
+        mysql configuration file with values from the environment and then
+        invokes the actual mysql client.
+
+ENVIRONMENT
+        The following environment variables are required:
+
+        DBLOGIN
+            The mysql user to log in as.
+
+        DBHOST
+            The hostname ofthe mysql server.
+
+        DBPORT
+            The port to use (default=\"$DBPORT_DFLT\")
+
+        DBPASSWORD
+            The database user password.
+
+        DBNAME
+            The default database name - required if MYSQL_DATABASE is not set
+
+        MYSQL_DATABASE
+            The database name.
+"
+SCRIPTDIR=`cd \`dirname $0\`; pwd`
+
+if [ ":$MYSQL" != ":" ] ; then
+    if [ ! -f "${MYSQL}" ] || [ ! -x "${MYSQL}" ] ; then
+        echo "$PROG: MYSQL environment variable is not valid - ignoring" >&2
+        MYSQL=
+    fi
+fi
+if [ ":$MYSQL" = ":" ] ; then
+    IFS_SAVE="$IFS"
+    IFS=":$IFS"
+    for dir in ${PATH} ; do
+        if [ -d "$dir" ] && [ -r "$dir" ] && [ -x "$dir" ] ; then
+            DIR=`cd $dir ; pwd`
+            if [ ":$DIR" != ":$SCRIPTDIR" ] ; then
+                if [ -f "${DIR}/mysql" ] && [ -x "${DIR}/mysql" ] ; then
+                     MYSQL="${DIR}/mysql"
+                    break
+                fi
+            fi
+        fi
+    done
+fi
+if [ ":$MYSQL" = ":" ] ; then
+    echo "$PROG: cannot determine location of real mysql program" >&2
+    exit 1
+fi
+
+DBPORT="${DBPORT:-$DBPORT_DFLT}"
+MYSQL_DATABASE=${MYSQL_DATABASE:-${DBNAME}}
+MYCNF=/tmp/mysql$$.cnf
+
+case $1 in
+    --help)
+        echo "NOTE: for wrapper script help, use --whelp"
+        ${MYSQL} --help
+        exit 0 ;;
+    --whelp)
+        cat <<EOF
+NAME
+        $PROG - $DESC
+
+SYNOPSIS
+        $USAGE1
+        $USAGE2
+
+DESCRIPTION$HELP_TEXT
+EOF
+        exit 0 ;;
+esac
+
+missing=
+for envvar in DBLOGIN DBHOST DBPASSWORD MYSQL_DATABASE ; do
+    eval val="\"\${$envvar}\""
+    if [ ":$val" = ":" ] ; then
+        missing="$missing $envvar"
+    fi
+done
+if [ ":$missing" != ":" ] ; then
+    echo "$PROG: the following environment variables are missing:" >&2
+    echo "   $missing" >&2
+    exit 1
+fi
+
+touch ${MYCNF}
+chmod 600 ${MYCNF}
+
+trap "rm -rf ${MYCNF} ; trap '' 0 ; exit 255" 1 2 13 15
+trap "rm -rf ${MYCNF} ; exit 0" 0
+
+cat >${MYCNF}.new <<EOF
+[client]
+user = $DBLOGIN
+password = $DBPASSWORD
+host = $DBHOST
+port = $DBPORT
+EOF
+unset DBPASSWORD
+
+# Atomic install in case file already exists
+mv ${MYCNF}.new ${MYCNF}
+
+${MYSQL} --defaults-extra-file=${MYCNF} "$@" ${MYSQL_DATABASE}

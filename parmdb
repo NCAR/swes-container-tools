@@ -1,0 +1,448 @@
+#!/bin/sh
+PROG=parmdb
+DESC="A simple secret/parameter database"
+USAGE1="$PROG -p|--put=param=value [-c|--constant] [-s|--secret]"
+USAGE2="$PROG -g|--get=param"
+USAGE3="$PROG -i|--init=rcfile [-c|--constant] [-s|--secret]"
+USAGE4="$PROG -f|--load-file=filename"
+USAGE5="$PROG -e|--load-env"
+USAGE6="$PROG -l|--list[=names|secrets|values|allvalues]"
+USAGE7="$PROG -r|--run command args..."
+USAGE8="$PROG -h|--help"
+HELP_TEXT="
+        This script manages a simple file-system-based object store for
+        configurable parameters and secrets. It is designed specifically to
+        assist in configuring applications in Docker containers that need
+        run-time parameters supplied via environment variables or via files
+        (e.g. /run/secrets/*).
+
+        Every parameter name consist of an alphabetic character followed by
+        zero or more alphanumeric or underscore characters. Every parameter
+        corresponds to a file under the directory identified by the PARM_DB
+        environment variable. Applications can retrieve a parameter values by
+        simply reading the appropriate file.
+
+        The following options are supported:
+
+        -g|--get=param
+            Retrieve the named parameter from the database and write its value
+            to standard output. Note that this just does a \"cat\" of the
+            parameter's file in the \"database directory\".
+
+        -p|--put=param=value
+            Store a single parameter in the database.
+
+        -i|--init=rcfile
+            Source the given shell rc file and add all shell variables
+            defined in the file to the database. Although any valid shell
+            commands can be included in the file, the file is intended to
+            contain only variable definitions, no more than one per line. The
+            $PROG script identifies parameters to add to the database by
+            searching the file for lines starting with \"<parmname>=\" and
+            extracting the name at the start of the line. This is meant to
+            be used when building images, rather than at application run-time.
+
+        -c|--constant
+            When used with -p|--put or -i|--init, the parameters are marked
+            as constant; their value will subsequently not be changeable.
+
+        -s|--secret
+            When used with -p|--put or -i|--init, the parameters are marked
+            as secret; their value will be shown by default (see -l|--list).
+
+        -f|--load-file=filename
+            Read parameter values from the named file and add them to the
+            database if and only if the parameters are already defined in the
+            database. Blanks lines and lines starting with '#' are ignored.
+            Lines ending with a backslash are concatenated with the following
+            line after removing the backslash (but retaining the newline).
+            No other special processing is done: no parameter or command
+            substitution is suported. All non-blank, non-comment lines are
+            expected to be of the form \"parmname=value\". This is meant 
+            to be used at application run-time to read configuration/secrets
+            files.
+
+        -e|--load-env
+            Copy all environment variables that have names matching defined
+            parameters to the database. This is meant to be used at application
+            run-time to read configuration values/secrets from the environment.
+
+        -l|--list[=names|secrets|values|allvalues|puts]
+            List all parameters in the database, one per line. If an argument
+            is given, it indicates the type of output desired: \"names\" will
+            list only parameter names; \"secrets\" will list only the names
+            of secrets; \"values\" will list names and values, but the values
+            of secrets will be hidden; \"allvalues\" will list names and values
+            of all parameters, including secrets; \"puts\" will list \"parmdb
+            --put\" commands that can re-create the entire database. When
+            values are shown, lines are of the form
+                <parmname>='<value>'
+            Any embedded single quote characters in the value are replaced
+            with the sequence
+                '\''
+            which allows the output to be evaluated to set shell variables.
+            Hidden secrets are displayed without quotes as
+                <parmname>=-
+            Note that if the \"-l\" form is used, an argument is required.
+            All arguments can be abbreviated to any leading substring (e.g.,
+            \"n\", \"na\", \"nam\", and \"name\" are all valid alternatives to
+            \"names\". Default is \"values\".
+
+        -r|--run command args...
+            Copy all parameters to environment variables and then exec the
+            indicated command.            
+
+        -h|--help
+            Print help and quit.        
+
+ENVIRONMENT
+        PARM_DB
+            The path of the directory to use as the object store. Each
+            parameter is a file in the directory.
+"
+ALL_USAGES="
+       $USAGE1
+       $USAGE2
+       $USAGE3
+       $USAGE4
+       $USAGE5
+       $USAGE6
+       $USAGE7
+       $USAGE8"
+USAGE="Usage:$ALL_USAGES"
+
+SCRIPTDIR=`cd \`dirname $0\`; pwd`
+
+#
+# Process command line
+#
+. $SCRIPTDIR/.parmdb-getopts.rc
+. $SCRIPTDIR/.parmdb-cmdline.rc
+
+if [ $MODE = h ] ; then
+    cat <<EOF
+NAME
+        $PROG - $DESC
+
+SYNOPSIS
+$ALL_USAGES
+
+DESCRIPTION$HELP_TEXT
+EOF
+    exit 0
+fi
+
+if [ ":${PARM_DB}" = ":" ] ; then
+    echo "$PROG: environment variable PARM_DB must be set" >&2
+    exit 1
+fi
+if [ ! -d "${PARM_DB}" ] ; then
+    echo "$PROG: ${PARM_DB}: not a directory" >&2
+    exit 1
+fi
+if [ ! -r "${PARM_DB}" ] || [ ! -w "${PARM_DB}" ] || [ ! -x "${PARM_DB}" ]
+then
+    echo "$PROG: ${PARM_DB}: you do not have permission to access the parameter store" >&2
+    exit 1
+fi
+
+RUN_DIR=`pwd` || exit 1
+
+#
+# Do the real work. Because we can't depend on shell functions being available,
+# we structure our code unusually. We determine what needs to be done first
+# and then selectively step through operations that are needed.
+#
+PARM_LIST=
+NEED_META=n
+QUERY_DB=n
+QUERY_ENV=n
+INPUT_FILE=
+LOAD_METHOD=
+PARM_FILTER=
+
+case $MODE in
+    p) # --put
+        parm=`expr "${p_opt}" : '\([^=]*\)=.*'`
+        escval=`expr "${p_opt}" : '[^=]*=\(.*\)' | sed -e "s/'/'\\\\\\''/g"`
+        eval "${parm}='${escval}'"
+        PARM_LIST="${parm}"
+        NEED_META=y
+        ACTION=write ;;
+
+    g) # --get
+        PARM_LIST="${g_opt}"
+        NEED_META=n
+        LISTTYPE=rawvalue
+        ACTION=list ;;
+
+    i) # --init
+        INPUT_FILE="${i_opt}"
+        LOAD_METHOD=sourceFile
+        NEED_META=y
+        ACTION=write ;;
+
+    f) # --load-file
+        INPUT_FILE="${f_opt}"
+        LOAD_METHOD=parseFile
+        PARM_FILTER=defined
+        NEED_META=y
+        ACTION=write ;;
+
+    e) # --load-env
+        QUERY_ENV=y
+        PARM_FILTER=defined
+        NEED_META=y
+        ACTION=write ;;
+
+    l) # --list
+       QUERY_DB=y
+       LISTTYPE="${l_opt}"
+       if [ "${LISTTYPE}" = "names" ] ; then
+           NEED_META=n
+       elif [ "${LISTTYPE}" = "secrets" ] ; then
+           PARM_FILTER=secret
+           NEED_META=y
+           LISTTYPE="names"
+       elif [ "${LISTTYPE}" = "values" ] ; then
+           NEED_META=y
+       elif [ "${LISTTYPE}" = "allvalues" ] ; then
+           NEED_META=n
+       elif [ "${LISTTYPE}" = "puts" ] ; then
+           NEED_META=y
+       fi
+       ACTION=list ;;
+       
+    r) # --run
+       QUERY_DB=y
+       NEED_META=n
+       LOAD_METHOD=db
+       ACTION=run ;;
+esac
+
+
+#
+# Get an initial set of target parameters, store them in PARM_LIST
+#
+if [ ":${INPUT_FILE}" != ":" ] ; then
+    # extract parm names from file, set PARM_LIST
+    if [ ! -f "${INPUT_FILE}" ] ; then
+        echo "$PROG: $INPUT_FILE: no such file" >&2
+        exit 1
+    fi
+    PARM_LIST=`sed -n 's/^[ 	]*\([a-zA-z][a-zA-Z0-9_]*\)=.*/\1/p' "${INPUT_FILE}"`
+elif [ ${QUERY_DB} = y ] ; then
+    # set PARM_LIST to all defined parms in db
+    PARM_LIST=`cd "${PARM_DB}" ; /bin/ls -1 | grep '^[a-zA-z][a-zA-Z0-9_]*$'`
+elif [ ${QUERY_ENV} = y ] ; then
+    # set PARM_LIST to all defined parms in environment
+    PARM_LIST=`printenv | sed -n 's/^\([a-zA-z][a-zA-Z0-9_]*\)=.*/\1/p'`
+fi
+
+#
+# Set IS_DEFINED_<parm>, IS_CONSTANT_<parm>, IS_SECRET_<parm> variables if
+# necessary
+#
+if [ $NEED_META = y ] ; then
+    for parm in ${PARM_LIST} ; do
+        parmfile="${PARM_DB}/${parm}"
+        is_defined=n
+        is_constant=n
+        is_secret=n
+        if [ -f "${parmfile}" ] ; then
+            is_defined=y
+            lsout=`/bin/ls -l "${parmfile}"`
+            case ${lsout} in
+               -rw?-*)
+                    is_secret=y ;;
+               -r-?-*)
+                    is_constant=y
+                    is_secret=y ;;
+               -r-?r*)
+                    is_constant=y ;;
+            esac
+        fi
+        eval "IS_DEFINED_${parm}=${is_defined}"
+        eval "IS_CONSTANT_${parm}=${is_constant}"
+        eval "IS_SECRET_${parm}=${is_secret}"
+    done
+fi
+
+#
+# Filter down the list of target parameters as indicated
+#
+if [ ":$PARM_FILTER" != ":" ] ; then
+    NEW_PARM_LIST=
+    for parm in ${PARM_LIST} ; do
+        case ${PARM_FILTER} in
+            defined)
+                # retain only defined parms
+                eval is_defined=\$IS_DEFINED_${parm}
+                if [ ":$is_defined" = ":y" ] ; then
+                    NEW_PARM_LIST="${NEW_PARM_LIST} ${parm}"
+                fi ;;
+            secret)
+                # retain only defined secret parms
+                eval is_secret=\$IS_SECRET_${parm}
+                if [ $is_secret = y ] ; then
+                    NEW_PARM_LIST="${NEW_PARM_LIST} ${parm}"
+                fi ;;
+        esac
+    done
+    PARM_LIST="${NEW_PARM_LIST}"
+fi
+
+#
+# Set shell variables using indicated method
+#
+if [ ":${LOAD_METHOD}" != ":" ] ; then
+    case ${LOAD_METHOD} in
+        sourceFile)
+            . "${INPUT_FILE}" >/dev/null 2>&1 || exit 1 ;;
+
+        parseFile)
+            lineno=0
+            rc=0
+            full_line=
+            continuation=n
+            PARSE_TMPFILE="/tmp/parmdb-parseFile$$"
+            trap "rm -f $PARSE_TMPFILE ; exit 1" 0 1 2 13 15
+            while read -r line ; do
+                lineno=`expr $lineno + 1`
+                lastchar=`expr "${line}" : '.*\(.\)$'`
+                if [ "${lastchar}" = "\\" ] ; then
+                    choppedline=`expr "${line}" : '\(.*\).$'`
+                    line_data="${choppedline}"'\
+'
+                    continuation=y
+                else
+                    line_data="${line}"
+                fi
+                full_line="${full_line}${line_data}"
+                if [ $continuation = y ] ; then
+                    continuation=n
+                    continue
+                fi
+                if [ ":${full_line}" = ":" ] ; then
+                    # empty line, skip
+                    full_line=
+                    continue
+                fi
+                expr "${full_line}" : '[ 	]*$' >/dev/null
+                if [ $? = 0 ] ; then
+                    # blank line, skip
+                    full_line=
+                    continue
+                fi
+                expr "${full_line}" : '[ 	]*#.*' >/dev/null
+                if [ $? = 0 ] ; then
+                    # comment line, skip
+                    full_line=
+                    continue
+                fi
+                var=`expr "${full_line}" : '[ 	]*\([a-zA-Z][a-zA-Z0-9_]*\)=.*'`
+                if [ ":${var}" != ":" ] ; then
+                    escval=`expr "${full_line}" : '[ 	]*[a-zA-Z][a-zA-Z0-9_]*=\(.*\)' | sed -e "s/'/'\\\\\\''/g"`
+                    echo "${var}='${escval}'"
+                else
+                    echo "${INPUT_FILE}[$lineno]: syntax error; expecting parmname=value" >&2
+                    echo "  got \"${full_line}\"" >&2
+                    rc=1
+                fi
+                full_line=
+            done <${INPUT_FILE} >${PARSE_TMPFILE}
+            . ${PARSE_TMPFILE}
+            rm -f $PARSE_TMPFILE
+            trap '' 0 1 2 13 15 ;;
+
+        db)
+           for parm in ${PARM_LIST} ; do
+               val=`cat "${PARM_DB}/${parm}"` || exit 1
+               eval "${parm}=\"\${val}\""
+           done ;;
+    esac
+fi
+
+for parm in ${PARM_LIST} ; do
+    parmfile="${PARM_DB}/${parm}"
+    case $ACTION in
+        write)
+            eval val="\"\${$parm}\""
+            eval is_defined=\"\${IS_DEFINED_${parm}}\"
+            eval is_constant=\"\${IS_CONSTANT_${parm}}\"
+            dowrite=n
+            if [ ! -f "${parmfile}" ] ; then
+                :> ${parmfile} || exit 1
+                chmod 644 "${parmfile}" || exit 1
+                dowrite=y
+            elif [ -s "${parmfile}" ] ; then
+                oldval=`cat ${parmfile}` || exit 1
+                if [ ":${val}" != ":${oldval}" ] ; then
+                    dowrite=y
+                fi
+            fi
+            if [ ":${is_constant}${dowrite}" = ":yy" ] ; then
+                echo "$PROG: warning: ${parm} cannot be changed" >&2
+                dowrite=n
+            fi
+            if [ $dowrite = y ] ; then
+                echo-n  "${val}" >${parmfile} || exit 1
+            fi
+            if [ ":$c_opt" = ":1" ] ; then
+                chmod a-w ${parmfile} || exit 1
+            fi
+            if [ ":$s_opt" = ":1" ] ; then
+                chmod go-r ${parmfile} || exit 1
+            fi ;;
+
+        list)
+            case $LISTTYPE in
+                rawvalue)
+                    if [ -f "${parmfile}" ] ; then
+                        cat "${parmfile}"
+                    fi ;;
+                names)
+                    echo "${parm}" ;;
+                values)
+                    if [ -s "${parmfile}" ] ; then
+                        eval is_secret=\"\${IS_SECRET_${parm}}\"
+                        if [ ":$is_secret" = ":y" ] ; then
+                            outval="-"
+                        else
+                            escval=`sed -e "s/'/'\\\\\\''/g" ${parmfile}`
+                            outval="'${escval}'"
+                        fi
+                    else
+                        outval="''"
+                    fi
+                    echo "${parm}=${outval}" ;;
+
+                allvalues)
+                    escval=`sed -e "s/'/'\\\\\\''/g" ${parmfile}`
+                    echo "${parm}='${escval}'" ;;
+
+                puts)
+                    escval=`sed -e "s/'/'\\\\\\''/g" ${parmfile}`
+                    opt=" "
+                    eval is_secret=\"\${IS_SECRET_${parm}}\"
+                    if [ ":$is_secret" = ":y" ] ; then
+                        opt=" --secret "
+                    fi
+                    eval is_constant=\"\${IS_CONSTANT_${parm}}\"
+                    if [ ":$is_constant" = ":y" ] ; then
+                        opt="${opt}--constant "
+                    fi
+                    echo "parmdb${opt}--put=${parm}='${escval}'" ;;
+
+            esac ;;
+    esac
+done
+if [ ":$ACTION" = ":run" ] ; then
+    if [ ":${PARM_LIST}" != ":" ] ; then
+        export ${PARM_LIST}
+    fi
+    exec "$@"
+    echo "$PROG: unable to exec \"$@\"" >&2
+    exit 1
+fi
+

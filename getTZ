@@ -1,0 +1,88 @@
+#!/bin/bash
+PROG=getTZ
+DESC="Convert \$TIMEZONE into a format suitable for the TZ variable"
+SCRIPTDIR=`cd \`dirname $0\`; pwd`
+
+USAGE1="$PROG [timezone]"
+USAGE2="$PROG --dump"
+USAGE3="$PROG -h|--help"
+TZDIR=/usr/share/zoneinfo
+TZBACKUP=${SCRIPTDIR}/.zoneinfo
+HELP_TEXT="
+        Given a timezone name as they appear under $TZDIR, (e.g.
+        \"America/Denver\"), convert the timezone to the short format suitable
+        for the TZ variable (e.g., "MST7MDT"). If no value is given on the
+        command line, the TIMEZONE environment variable is used.
+
+        If run with the argument \"--dump\", all known timezone informatino
+        will be written to standard output.
+
+        If the host does not have a ${TZDIR} directory (e.g. the \"alpine\"
+        distribution does not), the file \".zoneinfo\" will be used instead;
+        this file can be generated on a host with a $TZDIR directory using
+        the --dump option.
+"
+
+DUMP=false
+case $1 in
+    -h|--help)
+        cat <<EOF
+NAME
+        ${PROG} - $DESC
+
+SYNOPSIS
+        $USAGE1
+        $USAGE2
+
+DESCRIPTION$HELP_TEXT
+
+EOF
+        exit 0 ;;
+    --dump)
+        DUMP=true ;;
+    -*)
+        echo "${PROG}: illegal option: $1" >&2
+        echo "Usage:" >&2
+        echo "  $USAGE1" >&2
+        echo "  $USAGE2" >&2
+        exit 1 ;;
+    *)
+        TIMEZONE="$1" ;;
+esac
+
+LC_CTYPE=C
+LANG=C
+export LC_CTYPE LANG
+
+if $DUMP ; then
+    cd ${TZDIR} || exit 1
+    find -L [A-Z]* -type f -name '[A-Z]*' -print | while read timezone ; do
+        TZFILE="${TZDIR}/${timezone}"
+        tz=`tr '\000' '\n' <${TZFILE} | tail -1 | sed 's/^\([^,]*\).*/\1/'`
+        if [ ":$tz" != ":" ] ; then
+            echo "${timezone}" "${tz}"
+        fi
+      done
+    exit $?
+fi
+
+if [ ":${TIMEZONE}" = ":" ] ; then
+    echo "$PROG: no timezone provided" >&2
+    exit 1
+fi
+TZFILE="${TZDIR}/${TIMEZONE}"
+if [ ! -f "${TZFILE}" ] ; then
+    if [ -f "${TZBACKUP}" ] ; then
+        tz=`sed -n -e "s:^${TIMEZONE} \(.*\)$:\1:p" "${TZBACKUP}"`
+        if [ ":${tz}" != ":" ] ; then
+            echo "${tz}"
+            exit 0
+        fi
+    fi
+    echo "$PROG: ${TZFILE}: no such file" >&2
+    exit 1
+fi
+tr '\000' '\n' <${TZFILE} | tail -1 | sed 's/^\([^,]*\).*/\1/'
+
+
+
