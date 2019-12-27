@@ -12,10 +12,6 @@ jobs:
       - checkout
 
       - run:
-          name: Install git
-          command: 
-
-      - run:
           name: Update .zoneinfo or run tests
           command: |
               ./getTZ --dump >./zoneinfo
