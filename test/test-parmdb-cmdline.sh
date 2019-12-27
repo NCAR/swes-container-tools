@@ -1,7 +1,7 @@
 #!/bin/sh
 TESTDIR=`cd \`dirname $0\`; pwd`
 TESTLIBDIR="${TESTDIR}/../testlib"
-. ${TESTLIBDIR}/../testlib/init.rc
+. ${TESTLIBDIR}/init.rc
 
 PARMDB="${TESTDIR}/parmdb-cmdline-fake.sh"
 
