@@ -13,7 +13,7 @@ jobs:
 
       - run:
           name: Install git
-          command: apt-get update ; apt-get -y install git
+          command: 
 
       - run:
           name: Update .zoneinfo or run tests
@@ -31,6 +31,10 @@ jobs:
               fi
               if $install_zoneinfo ; then
                   mv zoneinfo .zoneinfo
+                  apt-get update
+                  apt-get -y install git
+                  git config --global user.email "sweg-dev@ucar.edu"
+                  git config --global user.name "SWEG CI"
                   git add .zoneinfo
                   git commit -m 'Updated .zoneinfo'
                   git push
