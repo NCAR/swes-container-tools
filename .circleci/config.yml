@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: debian:stretch
+      - image: circleci/python:latest
 
     steps:
       - add_ssh_keys:
@@ -12,13 +12,6 @@ jobs:
       - checkout
 
       - setup_remote_docker
-
-      - run:
-          name: Install needed packages
-          command: |
-              apt-get update
-              apt-get -y install docker git
-              type docker
 
       - run:
           name: Update configuration or run tests
