@@ -11,8 +11,10 @@ jobs:
 
       - checkout
 
+      - setup_remote_docker
+
       - run:
-          name: Update .zoneinfo or run tests
+          name: Update configuration or run tests
           command: |
               ./getTZ --dump >./zoneinfo
               install_zoneinfo=false
@@ -40,3 +42,15 @@ jobs:
                   exit 0
               fi
               echo "Run tests"
+              for baseimage in \
+                  alpine:latest \
+                  debian:oldstable \
+                  debian:stable \
+                  centos:centos7 \
+                  centos:centos8 \
+              ; do
+                  echo $baseimage:
+                  docker run -rm --volume `pwd`:/mnt $baseimage /mnt/test/runalltests.sh
+                  echo
+              done
+                  
