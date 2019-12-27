@@ -315,9 +315,8 @@ fi
 
 DEFINE_TEST "when --load-file set three defined parms, all are set"
 RUN parmdb -lvalues
-
 exp3='var3='\''val3
- with a newline'
+with a newline'
 if gotExpectedOutput --contains "var1='val1'" &&
    gotExpectedOutput --contains "var2='val2'" &&
    gotExpectedOutput --contains "$exp3" ; then

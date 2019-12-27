@@ -24,17 +24,14 @@ EOF
         exit 0 ;;
 esac
 
-SCRIPTDIR=`cd \`dirname $0\`; pwd`
-CONFIGFILE="${SCRIPTDIR}/.swes-container-tools.rc"
-if [ ! -f ${CONFIGFILE} ] ; then
-    ${SCRIPTDIR}/configure-swes-container-tools || exit 1
-fi
-. $CONFIGFILE
-
-if [ ":$ECHO_N" = ":n" ] ; then
+en_=`echo -n 1 ; echo 2`
+if [ "$en_" = "12" ] ; then
     echo -n "$@"
-elif [ ":$ECHO_N" = ":c" ] ; then
-    echo "$@\c"
 else
-    echo "$@"
+    en_=`echo "1\c" ; echo 2`
+    if [ "$en_" = "12" ] ; then
+        echo "$@\c"
+    else
+        echo "$@"
+    fi
 fi

@@ -122,7 +122,7 @@ if [ $PRERELEASE = y ] ; then
     OUTVAL=${OUTVAL}`expr "${SEMVER}" : '[^-]*\(-[^+]*\).*'`
 fi
 if [ $METADATA = y ] ; then
-    OUTVAL=${OUTVAL}`expr "${SEMVER}" : '[^+]*\(\+.*\)'`
+    OUTVAL=${OUTVAL}`expr "${SEMVER}" : '[^+]*\([+].*\)'`
 fi
 set :
 if [ $INVAL = y ] ; then

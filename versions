@@ -83,11 +83,6 @@ HELP_TEXT="
             \"semantic version\" string; this will make the string compatible
             with docker tags."
 SCRIPTDIR=`cd \`dirname $0\`; pwd`
-CONFIGFILE="${SCRIPTDIR}/.swes-container-tools.rc"
-if [ ! -f ${CONFIGFILE} ] ; then
-    ${SCRIPTDIR}/configure-swes-container-tools || exit 1
-fi
-. $CONFIGFILE
 
 #
 # Process command line
@@ -220,6 +215,16 @@ else
 fi
 
 FILTER='^[vV]?[0-9][^:]*$'
+
+if [ ":${AWK}" = ":" ] ; then
+    for AWK in awk nawk gawk false ; do
+        ${AWK} 'BEGIN{exit 0}' 2>/dev/null && break
+    done
+    if test "${AWK}" = "false" ; then
+        echo "${PROG}: cannot find awk!" >&2
+        AWK=awk
+    fi
+fi
 
 #
 # The AWK script filters out non-versions strings and normalizes version

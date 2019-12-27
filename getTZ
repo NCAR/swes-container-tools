@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 PROG=getTZ
 DESC="Convert \$TIMEZONE into a format suitable for the TZ variable"
 SCRIPTDIR=`cd \`dirname $0\`; pwd`
