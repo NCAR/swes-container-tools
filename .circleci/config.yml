@@ -33,8 +33,8 @@ jobs:
                   git config --global user.name "SWEG CI"
                   git add .zoneinfo
                   git commit -m 'Updated .zoneinfo'
-                  mkdir ~/.ssh/
-                  echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+                  mkdir -p ~/.ssh/
+                  echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
                   git push origin HEAD:master
                   # Quit this build
                   exit 0
