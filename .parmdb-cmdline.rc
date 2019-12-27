@@ -1,0 +1,74 @@
+:
+# Code for validating command-line argument semantics. See  parmdb-getopts.rc
+case $MODE in
+    '')
+        cat <<EOF >&2
+$PROG: one of -p|--put, -g|--get, -i|--init, -f|--load-file,
+         -e|--load-env, -l|--list, -r|--run, or -h|--help is required
+$USAGE
+EOF
+        exit 1 ;;
+    ?)  : ;;
+    *)
+        cat <<EOF >&2
+$PROG: only one of -p|--put, -g|--get, -i|--init, -f|--load-file,
+         -e|--load-env, -l|--list, -r|--run, or -h|--help is allowed
+$USAGE
+EOF
+        exit 1 ;;
+esac
+
+if [ ":$c_opt" = :1 ] ; then
+    if [ $MODE != p ] && [ $MODE != i ] ; then
+        echo "$PROG: -c|--constant can only be used with -p|--put or -i|--init" >&2
+        exit 1
+    fi
+fi
+if [ ":$s_opt" = :1 ] ; then
+    if [ $MODE != p ] && [ $MODE != i ] ; then
+        echo "$PROG: -s|--secret can only be used with -p|--put or -i|--init" >&2
+        exit 1
+    fi
+fi
+
+case $MODE in
+    l)
+        case $l_opt in
+            names|name|nam|na|n)
+                l_opt=names ;;
+            secrets|secret|secre|secr|sec|se|s)
+                l_opt=secrets ;;
+            values|value|valu|val|va|v)
+                l_opt=values ;;
+            allvalues|allvalue|allvalu|allval|allva|allv|all|al|a)
+                l_opt=allvalues ;;
+            puts|put|pu|p)
+                l_opt=puts ;;
+            *)
+                echo "$PROG: -l|--list value must be one of:
+             \"names\", \"secrets\", \"values\", \"allvalues\", or \"puts\"" >&2
+                exit 1 ;;
+        esac
+        if [ ":$TEST_COMMAND_LINE" != ":" ] ; then
+            echo "l_opt=${l_opt}"
+        fi ;;
+
+    p)
+        expr "${p_opt}" : '[^=]*=.*' >/dev/null 2>&1
+        if [ $? != 0 ] ; then
+            echo "$PROG: -p|--put requires an argument of the form parm=value" >&2
+            exit 1
+        fi
+        expr "${p_opt}" : '[a-zA-Z][a-zA-Z0-9_]*=.*' >/dev/null 2>&1
+        if [ $? != 0 ] ; then
+            echo "$PROG: -p|--put argument does not specify a valid parameter name" >&2
+            exit 1
+        fi ;;
+
+    g)
+        expr "${g_opt}" : '[a-zA-Z][a-zA-Z0-9_]*$' >/dev/null 2>&1
+        if [ $? != 0 ] ; then
+            echo "$PROG: -g|--get argument does not specify a valid parameter name" >&2
+            exit 1
+        fi ;;
+esac

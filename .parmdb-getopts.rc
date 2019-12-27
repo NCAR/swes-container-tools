@@ -1,0 +1,76 @@
+:
+# Code for collecting command-line options. See parmdb.
+MODE=
+while [ $# != 0 ] ; do
+    longopt=
+    opt=
+    optarg=
+    arg="$1"
+    shift;
+    case $arg in
+        -[cserh]?*)
+            opt=`expr "$arg" : '-\(.\).*'`
+            optarg=1
+            otheropts=`expr "$arg" : '-.\(.*\)'`
+            set : -${otheropts} "$@"
+            shift ;;
+        -[cserh])
+            opt=`expr "$arg" : '-\(.\)'`
+            opt=`expr "$arg" : '-\(.\)'`
+            optarg=1 ;;
+        -[gpifl]=*)
+            opt=`expr "$arg" : '-\(.\)=.*'`
+            optarg=`expr "$arg" : '-.=\(.*\)'` ;;
+        -[gpifl]?*)
+            opt=`expr "$arg" : '-\(.\).*'`
+            optarg=`expr "$arg" : '-.\(.*\)'` ;;
+        -[gpifl])
+            opt=`expr "$arg" : '-\(.\)'`
+            optarg="$1"
+            shift ;;
+        --*=*)
+            longopt=`expr "$arg" : '--\([^=]*\)=.*'`
+            opt=`expr "$arg" : '[-a-z]*-\([a-z]\)[a-z]*=.*'`
+            optarg=`expr "$arg" : '[^=]*=\(.*\)'` ;;
+        --*)
+            longopt=`expr "$arg" : '--\(.*\)'`
+            opt=`expr "$arg=" : '[-a-z]*-\([a-z]\)[a-z]*='`
+            optarg=1
+            if [ "$opt" = "l" ] ; then
+                optarg="values"
+            fi ;;
+        *)
+            set "${arg}" "$@"
+            break ;;
+    esac
+    case $longopt in
+        '')
+            : ;;
+        get|put|init|constant|secret|load-file|load-env|list|run|help)
+            : ;;
+        *)
+            echo "$PROG: unknown option: --$longopt" >&2
+            exit 1
+    esac
+    if [ ":$TEST_OPT_PROCESSING" != ":" ] ; then
+        echo opt="${opt}"
+        echo optarg="${optarg}"
+    fi
+    eval ${opt}_opt="'${optarg}'"
+    case $opt in
+        [gpifl])
+            if [ ":${optarg}" = ":" ] ; then
+                echo "$PROG: -$opt requires an argument" >&2
+                exit 1
+            fi
+            MODE=${opt}$MODE ;;
+        [her])
+            MODE=${opt}$MODE ;;
+        [cs])
+            : ;;
+        -*)
+            echo "$PROG: illegal option: $opt" >&2
+            usage >&2
+            return 1 ;;
+    esac
+done
