@@ -8,9 +8,14 @@ jobs:
       - checkout
 
       - run:
-          name: Greeting
-          command: echo Hello, world.
-
-      - run:
-          name: Print the Current Time
-          command: date
+          name: Check environment
+          command: |
+              echo pwd:
+              pwd
+              ls -la
+              echo Environment:
+              printenv
+              echo /etc:
+              ls -l /etc
+              echo /usr/share/zoneinfo:
+              ls -l /usr/share/zoneinfo
