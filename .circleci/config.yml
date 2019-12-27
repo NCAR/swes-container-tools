@@ -18,6 +18,7 @@ jobs:
               install_zoneinfo=false
               if [ ! -f .zoneinfo ] ; then
                   echo "Installing missing .zoneinfo"
+                  install_zoneinfo=true
               elif cmp -s zoneinfo .zoneinfo ; then
                   echo ".zoneinfo is up-to-date"
               else
