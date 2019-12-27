@@ -1,2 +1,6 @@
 # swes-container-tools
-Portable scripts for simplifying and standardizing Docker containers
+
+This repo contains ultra-portable Bourne-ish scripts that are designed to be
+run within Docker containers to simplify and standardize common operations.
+
+
