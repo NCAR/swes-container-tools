@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 PROG="fileEquals"
 DESC="Check if two files contain exactly the same data"
 USAGE1="$PROG file1 file2"

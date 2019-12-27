@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 PROG="noOutput"
 DESC="Check if \$OUT file is empty"
 USAGE1="$PROG [--error]"

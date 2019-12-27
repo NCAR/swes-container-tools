@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 PROG="gotExpectedOutput"
 DESC="Check if \$OUT file contains given string"
 USAGE1="$PROG [--contains] [--error|--retval] string"
