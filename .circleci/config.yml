@@ -18,6 +18,7 @@ jobs:
           command: |
               apt-get update
               apt-get -y install docker git
+              type docker
 
       - run:
           name: Update configuration or run tests
