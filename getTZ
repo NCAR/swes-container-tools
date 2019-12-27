@@ -62,7 +62,7 @@ if $DUMP ; then
         if [ ":$tz" != ":" ] ; then
             echo "${timezone}" "${tz}"
         fi
-      done
+      done | sort
     exit $?
 fi
 
