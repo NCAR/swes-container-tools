@@ -40,6 +40,8 @@ jobs:
                   exit 0
               fi
               echo "Run tests"
+              docker create -v /scripts --name scripts alpine:latest /bin/true
+              docker cp ./ scripts:/scripts
               for baseimage in \
                   alpine:latest \
                   debian:oldstable \
@@ -48,7 +50,7 @@ jobs:
                   centos:centos8 \
               ; do
                   echo $baseimage:
-                  docker run --rm --volume `pwd`:/mnt $baseimage /mnt/test/runalltests.sh
+                  docker run --rm --volumes-from scripts $baseimage /scripts/test/runalltests.sh
                   echo
               done
                   
