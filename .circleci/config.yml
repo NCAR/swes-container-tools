@@ -33,7 +33,7 @@ jobs:
                   git config --global user.name "SWEG CI"
                   git add .zoneinfo
                   git commit -m 'Updated .zoneinfo'
-                  git push
+                  git push origin HEAD:master
                   # Quit this build
                   exit 0
               fi
