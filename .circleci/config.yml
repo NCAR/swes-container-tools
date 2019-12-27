@@ -5,17 +5,31 @@ jobs:
       - image: debian:stretch
 
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "71:f3:13:88:05:74:a8:94:ab:70:e8:e2:5c:24:7d:a5"
+
       - checkout
 
       - run:
-          name: Check environment
+          name: Update .zoneinfo or run tests
           command: |
-              echo pwd:
-              pwd
-              ls -la
-              echo Environment:
-              printenv
-              echo /etc:
-              ls -l /etc
-              echo /usr/share/zoneinfo:
-              ls -l /usr/share/zoneinfo
+              ./getTZ --dump >./zoneinfo
+              install_zoneinfo=false
+              if [ ! -f .zoneinfo ] ; then
+                  echo "Installing missing .zoneinfo"
+              elif cmp -s zoneinfo .zoneinfo
+                  echo ".zoneinfo is up-to-date"
+              else
+                  echo "Installing newer .zoneinfo"
+                  install_zoneinfo=true
+              fi
+              if $install_zoneinfo ; then
+                  mv zoneinfo .zoneinfo
+                  git add .zoneinfo
+                  git commit -m 'Updated .zoneinfo'
+                  git push
+                  # Quit this build
+                  exit 0
+              fi
+              echo "Run tests"
