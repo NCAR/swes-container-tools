@@ -28,6 +28,13 @@ HELP_TEXT="
         that directory is used as an input file and the input directory is
         structure is copied to the output directory tree.
 
+PORTABILITY
+        This script uses the \"here-document\" internally to handle parameter
+        and command substitution. In at least some versions of the ash shell
+        under alpine, if a substituted command produces no input and is alone
+        on a line, the entire line will be removed; furthermore, if that line
+        is preceeded by blank lines, those lines will be removed as well.
+
 ENVIRONMENT
         PARM_DB
             The path of the directory to use as the object store. Each
@@ -119,6 +126,7 @@ RAND=`random 8 | tr / =`
 TMPFILE=/tmp/inject-parms$RAND
 trap "rm -f $TMPFILE ; exit 1" 1 2 13 15
 echo "#!/bin/sh" >$TMPFILE
+echo "unset IFS" >>$TMPFILE
 chmod 700 $TMPFILE
 EOFMARK="EOF_$RAND"
 for infile in ${infiles} ; do
@@ -143,8 +151,10 @@ for infile in ${infiles} ; do
         echo "$EOFMARK"
     fi
 done >>$TMPFILE
+
 ${SCRIPTDIR}/parmdb --run $TMPFILE
 rc=$?
+
 rm -f $TMPFILE
 trap "" 0
 exit $rc

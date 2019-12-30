@@ -8,9 +8,9 @@ outdir=$TMPDIR/out.d
 infile1=$TMPDIR/in.d/infile1
 cat >$infile1 <<'EOF'
 first
-$testvar
-${testvar}
-`parmdb -gtestvar`
+ $testvar
+ ${testvar}
+ `parmdb -gtestvar`
 last
 EOF
 
@@ -85,9 +85,9 @@ fi
 
 cat >$TMPDIR/expected1 <<EOF
 first
-
-
-
+ 
+ 
+ 
 last
 EOF
 
@@ -108,9 +108,9 @@ parmdb -ptestvar=testval
 
 cat >$TMPDIR/expected1 <<EOF
 first
-testval
-testval
-testval
+ testval
+ testval
+ testval
 last
 EOF
 rm -f $outdir/infile1
