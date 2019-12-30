@@ -256,7 +256,7 @@ while : ; do
     fi
 
     eval test="\"\$test${testnum}\""
-    if [[ ":$test" = ":" ]] ; then
+    if [ ":$test" = ":" ] ; then
         break
     fi
     testdesc=`echo "${test}" | sed "s:$PARMDB:parmdb:"`
