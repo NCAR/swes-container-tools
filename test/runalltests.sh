@@ -3,8 +3,6 @@ TESTS="
   test-echo-n.sh
   test-random.sh
   test-getTZ.sh
-  test-versions.sh
-  test-parse-semver.sh
   test-parmdb-cmdline.sh
   test-parmdb.sh
   test-mysql.sh
