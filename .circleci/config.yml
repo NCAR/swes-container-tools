@@ -49,6 +49,11 @@ jobs:
                   centos:centos7 \
                   centos:centos8 \
               ; do
+                  t=`expr "$baseimage" : '.*:\(.*\)'`
+                  if [ -f .circleci/Dockerfile-$t ] ; then
+                      docker build -t new$t -f .circleci/Dockerfile-$t .circleci
+                      baseimage=new$t
+                  fi
                   echo $baseimage:
                   docker run --rm --volumes-from scripts $baseimage /scripts/test/runalltests.sh
                   echo

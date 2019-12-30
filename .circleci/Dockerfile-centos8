@@ -1,0 +1,2 @@
+FROM centos:centos8
+RUN yum install diffutils
