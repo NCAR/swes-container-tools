@@ -2,10 +2,10 @@
 PROG=parmdb
 DESC="A simple secret/parameter database"
 USAGE1="$PROG -p|--put=param=value [-c|--constant] [-s|--secret]"
-USAGE2="$PROG -g|--get=param"
+USAGE2="$PROG -g|--get=param [-d|--env-default]"
 USAGE3="$PROG -i|--init=rcfile [-c|--constant] [-s|--secret]"
 USAGE4="$PROG -f|--load-file=filename"
-USAGE5="$PROG -e|--load-env"
+USAGE5="$PROG -e|--load-env [parms]"
 USAGE6="$PROG -l|--list[=names|secrets|values|allvalues]"
 USAGE7="$PROG -r|--run command args..."
 USAGE8="$PROG -h|--help"
@@ -27,7 +27,12 @@ HELP_TEXT="
         -g|--get=param
             Retrieve the named parameter from the database and write its value
             to standard output. Note that this just does a \"cat\" of the
-            parameter's file in the \"database directory\".
+            parameter's file in the \"database directory\". 
+
+        -d|--env-default
+            When used with -g|--get, if the parameter does not exist in the
+            database but there is a matching environment variable, the
+            environment variable's value is returned.
 
         -p|--put=param=value
             Store a single parameter in the database.
@@ -63,9 +68,10 @@ HELP_TEXT="
             files.
 
         -e|--load-env
-            Copy all environment variables that have names matching defined
-            parameters to the database. This is meant to be used at application
-            run-time to read configuration values/secrets from the environment.
+            Copy environment variables to the database; only variables that
+            have names matching already-defined parameters are added. This is
+            meant to be used at application run-time to read configuration
+            values/secrets from the environment.
 
         -l|--list[=names|secrets|values|allvalues|puts]
             List all parameters in the database, one per line. If an argument
@@ -400,6 +406,9 @@ for parm in ${PARM_LIST} ; do
                 rawvalue)
                     if [ -f "${parmfile}" ] ; then
                         cat "${parmfile}"
+                    elif [ ":${d_opt}" = ":1" ] ; then
+                        eval val="\"\$${parm}\""
+                        echo-n "${val}"
                     fi ;;
                 names)
                     echo "${parm}" ;;

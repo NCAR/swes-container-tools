@@ -8,13 +8,13 @@ while [ $# != 0 ] ; do
     arg="$1"
     shift;
     case $arg in
-        -[cserh]?*)
+        -[dcserh]?*)
             opt=`expr "$arg" : '-\(.\).*'`
             optarg=1
             otheropts=`expr "$arg" : '-.\(.*\)'`
             set : -${otheropts} "$@"
             shift ;;
-        -[cserh])
+        -[dcserh])
             opt=`expr "$arg" : '-\(.\)'`
             opt=`expr "$arg" : '-\(.\)'`
             optarg=1 ;;
@@ -46,7 +46,7 @@ while [ $# != 0 ] ; do
     case $longopt in
         '')
             : ;;
-        get|put|init|constant|secret|load-file|load-env|list|run|help)
+        get|env-default|put|init|constant|secret|load-file|load-env|list|run|help)
             : ;;
         *)
             echo "$PROG: unknown option: --$longopt" >&2
@@ -66,7 +66,7 @@ while [ $# != 0 ] ; do
             MODE=${opt}$MODE ;;
         [her])
             MODE=${opt}$MODE ;;
-        [cs])
+        [dcs])
             : ;;
         -*)
             echo "$PROG: illegal option: $opt" >&2

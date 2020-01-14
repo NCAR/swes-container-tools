@@ -29,11 +29,21 @@ else
     FAILURE
 fi
 
-DEFINE_TEST "when PARM_DB valid and -g var, no output, no error"
+DEFINE_TEST "when PARM_DB valid and -g undefined_var, no output, no error"
 mkdir ${PARM_DB} || exit 1
-RUN parmdb -g var
+RUN parmdb -g undefined_var
 
 if noOutput && noOutput --error ; then
+    SUCCESS
+else
+    FAILURE
+fi
+
+DEFINE_TEST "when db empty and -dg envvar, \$envvar returned"
+envvar=value export envvar
+RUN parmdb -dg envvar
+
+if gotExpectedOutput --exact value ; then
     SUCCESS
 else
     FAILURE

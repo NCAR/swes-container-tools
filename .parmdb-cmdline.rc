@@ -30,6 +30,12 @@ if [ ":$s_opt" = :1 ] ; then
         exit 1
     fi
 fi
+if [ ":$d_opt" = :1 ] ; then
+    if [ $MODE != g ] ; then
+        echo "$PROG: -d|--env-default can only be used with -g|--get" >&2
+        exit 1
+    fi
+fi
 
 case $MODE in
     l)

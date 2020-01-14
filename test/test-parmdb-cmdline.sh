@@ -11,8 +11,10 @@ test1="$PARMDB -g foo"
 expected1="opt=g
 optarg=foo"
 
-test2="$PARMDB -gfoo"
-expected2="opt=g
+test2="$PARMDB -dgfoo"
+expected2="opt=d
+optarg=1
+opt=g
 optarg=foo"
 
 test3="$PARMDB --get=foo"
@@ -235,7 +237,10 @@ error60="does not specify a valid parameter name"
 test61="$PARMDB --last=names"
 error61="does not specify a valid parameter name"
 
-TEST_COMMAND_LINE_MAX=61
+test62="$PARMDB --env-default"
+error62="can only be used with"
+
+TEST_COMMAND_LINE_MAX=62
 
 testnum=0
 npassed=0
