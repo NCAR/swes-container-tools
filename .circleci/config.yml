@@ -75,7 +75,7 @@ jobs:
               cd /tmp/wiki
               git add .
               git commit -m 'Latest doc build'
-              git push
+              #git push
                   
 workflows:
   version: 2
