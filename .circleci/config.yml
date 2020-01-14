@@ -77,3 +77,12 @@ jobs:
               git commit -m 'Latest doc build'
               git push
                   
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          context: sweg
+          filters:
+            branches:
+              only: /.*/
