@@ -67,11 +67,11 @@ jobs:
           name: "Generate documentation"
           command: |
               set +e
-              git clone --depth 1 https://${GH_TOKEN}@github.com/NCAR/citools.git /usr/local/bin
+              git clone --depth 1 https://${GH_TOKEN}@github.com/NCAR/citools.git /tmp/citools
               REPO=gwilliam-ucar-edu/swes-container-tools
               export REPO
               git clone https://${GH_TOKEN}@github.com/$REPO.wiki.git /tmp/wiki
-              /usr/local/bin/citools-docgen --bindir=`pwd` /tmp/wiki
+              /tmp/citools/citools-docgen --bindir=`pwd` /tmp/wiki
               cd /tmp/wiki
               git add .
               git commit -m 'Latest doc build'
