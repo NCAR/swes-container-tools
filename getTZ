@@ -14,7 +14,7 @@ HELP_TEXT="
         for the TZ variable (e.g., "MST7MDT"). If no value is given on the
         command line, the TIMEZONE environment variable is used.
 
-        If run with the argument \"--dump\", all known timezone informatino
+        If run with the argument \"--dump\", all known timezone information
         will be written to standard output.
 
         If the host does not have a ${TZDIR} directory (e.g. the \"alpine\"
