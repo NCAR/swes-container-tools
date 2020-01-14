@@ -12,7 +12,6 @@ DBNAME=
 MYSQL_DATABASE=db
 export DBLOGIN DBHOST DBPASSWORD DBNAME MYSQL_DATABASE
 
-
 DEFINE_TEST "when DBLOGIN missing, error"
 DBLOGIN= export DBLOGIN
 RUN $SCRIPTDIR/mysql
@@ -103,5 +102,20 @@ else
 fi
 MYSQL_DATABASE=db export MYSQL_DATABASE
 DBNAME= export DBNAME
+
+DEFINE_TEST "when required envvars are in parmdb, no error"
+PARM_DB=$TMPDIR/parmdb export PARM_DB
+mkdir $PARM_DB
+for parm in DBLOGIN DBHOST DBPASSWORD DBNAME MYSQL_DATABASE ; do
+    eval val="\"\$${parm}\""
+    $SCRIPTDIR/parmdb --put=${parm}="${val}"
+done
+unset DBLOGIN DBHOST DBPASSWORD DBNAME MYSQL_DATABASE
+RUN $SCRIPTDIR/mysql </dev/null
+if noOutput --error ; then
+    SUCCESS
+else
+    FAILURE
+fi
 
 . cleanup.rc

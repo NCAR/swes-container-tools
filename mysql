@@ -2,15 +2,23 @@
 PROG=mysql
 DESC="Wrapper script for mysql client"
 USAGE1="$PROG mysql_opts..."
-USAGE2="$PROG --whelp"
+USAGE2="$PROG --help"
+USAGE3="$PROG -I|?"
 DBPORT_DFLT=3306
 HELP_TEXT="
         $PROG is a simple wrapper script that initializes a temporary
         mysql configuration file with values from the environment and then
         invokes the actual mysql client.
 
+        The --help command-line option will print help text for the wrapper
+        script. The -I or -? options will print help text for the actual
+        mysql client.
+
 ENVIRONMENT
-        The following environment variables are required:
+        The following environment variables are required; however, if the
+        any are missing but the PARM_DB variable is set, the script will
+        use the \"parmdb\" script to try loading these variables from the
+        \$PARM_DB parameter store.
 
         DBLOGIN
             The mysql user to log in as.
@@ -29,6 +37,10 @@ ENVIRONMENT
 
         MYSQL_DATABASE
             The database name.
+
+        PARM_DB
+            The path of the directory to use as a parameter store (see parmdb)
+
 "
 SCRIPTDIR=`cd \`dirname $0\`; pwd`
 
@@ -63,11 +75,10 @@ MYSQL_DATABASE=${MYSQL_DATABASE:-${DBNAME}}
 MYCNF=/tmp/mysql$$.cnf
 
 case $1 in
+    -[I?])
+       ${MYSQL} --help
+       exit 0 ;;
     --help)
-        echo "NOTE: for wrapper script help, use --whelp"
-        ${MYSQL} --help
-        exit 0 ;;
-    --whelp)
         cat <<EOF
 NAME
         $PROG - $DESC
@@ -82,10 +93,16 @@ EOF
 esac
 
 missing=
-for envvar in DBLOGIN DBHOST DBPASSWORD MYSQL_DATABASE ; do
-    eval val="\"\${$envvar}\""
+if [ ":$PARM_DB" != ":" ] ; then
+    for var in DBLOGIN DBHOST DBPORT DBPASSWORD DBNAME MYSQL_DATABASE ; do
+        val=`$SCRIPTDIR/parmdb --get=$var --env-default`
+        eval "$var=\"\${val}\""
+    done
+fi
+for var in DBLOGIN DBHOST DBPASSWORD MYSQL_DATABASE ; do
+    eval val="\"\${$var}\""
     if [ ":$val" = ":" ] ; then
-        missing="$missing $envvar"
+        missing="$missing $var"
     fi
 done
 if [ ":$missing" != ":" ] ; then
