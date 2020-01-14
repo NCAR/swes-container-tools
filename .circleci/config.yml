@@ -74,8 +74,10 @@ jobs:
               /tmp/citools/citools-docgen --bindir=`pwd` /tmp/wiki
               cd /tmp/wiki
               git add .
-              git commit -m 'Latest doc build'
-              #git push
+              if git commit -m 'Latest doc build' ; then
+                  git push
+              fi
+
                   
 workflows:
   version: 2
