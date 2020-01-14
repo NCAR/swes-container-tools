@@ -55,7 +55,7 @@ jobs:
               ; do
                   t=`expr "$baseimage" : '.*:\(.*\)'`
                   if [ -f .circleci/Dockerfile-$t ] ; then
-                      docker build -t new$t -f .circleci/Dockerfile-$t .circleci
+                      echo docker build -t new$t -f .circleci/Dockerfile-$t .circleci
                       baseimage=new$t
                   fi
                   echo $baseimage:
