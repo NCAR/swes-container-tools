@@ -55,11 +55,11 @@ jobs:
               ; do
                   t=`expr "$baseimage" : '.*:\(.*\)'`
                   if [ -f .circleci/Dockerfile-$t ] ; then
-                      echo docker build -t new$t -f .circleci/Dockerfile-$t .circleci
+                      docker build -t new$t -f .circleci/Dockerfile-$t .circleci
                       baseimage=new$t
                   fi
                   echo $baseimage:
-                  #docker run --rm --volumes-from scripts $baseimage /scripts/test/runalltests.sh
+                  docker run --rm --volumes-from scripts $baseimage /scripts/test/runalltests.sh
                   echo
               done
 
