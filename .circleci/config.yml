@@ -68,7 +68,7 @@ jobs:
           command: |
               set +e
               git clone --depth 1 https://${GH_TOKEN}@github.com/NCAR/citools.git /tmp/citools
-              REPO=gwilliam-ucar-edu/swes-container-tools
+              REPO=$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
               export REPO
               git clone https://${GH_TOKEN}@github.com/$REPO.wiki.git /tmp/wiki
               /tmp/citools/citools-docgen --bindir=`pwd` /tmp/wiki

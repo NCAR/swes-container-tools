@@ -8,6 +8,6 @@ configuration runs the test suite on a number of different Linux distributions.
 All scripts support the "--help" command-line flag for displaying help.
 
 You can see a list of all current scripts and their help documentation on the
-[wiki](https://github.com/gwilliam-ucar-edu/swes-container-tools/wiki).
+[wiki](https://github.com/NCAR/swes-container-tools/wiki).
 
 
