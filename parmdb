@@ -11,16 +11,21 @@ USAGE7="$PROG -r|--run command args..."
 USAGE8="$PROG -h|--help"
 HELP_TEXT="
         This script manages a simple file-system-based object store for
-        configurable parameters and secrets. It is designed specifically to
-        assist in configuring applications in Docker containers that need
-        run-time parameters supplied via environment variables or via files
-        (e.g. /run/secrets/*).
+        configurable parameters and secrets. It is meant to assist in
+        configuring applications in Docker containers that need run-time
+        parameters supplied via environment variables or via files (e.g.
+        /run/secrets/*). Specifically, parameter values can be injected into
+        a container in various ways, and applications can access parameters
+        in various ways, without coupling the inject method and the access
+        method.
 
         Every parameter name consist of an alphabetic character followed by
         zero or more alphanumeric or underscore characters. Every parameter
         corresponds to a file under the directory identified by the PARM_DB
-        environment variable. Applications can retrieve a parameter values by
-        simply reading the appropriate file.
+        environment variable. Applications can retrieve a parameter's value by
+        simply reading the appropriate file, by running \"$PROG --get\", or,
+        if the application is invoked using \"$PROG --run\", by reading an
+        environment variable.
 
         The following options are supported:
 
@@ -45,7 +50,9 @@ HELP_TEXT="
             $PROG script identifies parameters to add to the database by
             searching the file for lines starting with \"<parmname>=\" and
             extracting the name at the start of the line. This is meant to
-            be used when building images, rather than at application run-time.
+            be used when building images, rather than at application run-time,
+            because source-ing an externally provided rc file at run-time
+            can be a security risk.
 
         -c|--constant
             When used with -p|--put or -i|--init, the parameters are marked
@@ -62,7 +69,7 @@ HELP_TEXT="
             Lines ending with a backslash are concatenated with the following
             line after removing the backslash (but retaining the newline).
             No other special processing is done: no parameter or command
-            substitution is suported. All non-blank, non-comment lines are
+            substitution is supported. All non-blank, non-comment lines are
             expected to be of the form \"parmname=value\". This is meant 
             to be used at application run-time to read configuration/secrets
             files.
@@ -105,16 +112,53 @@ ENVIRONMENT
         PARM_DB
             The path of the directory to use as the object store. Each
             parameter is a file in the directory.
+
+EXAMPLES
+        When building the container, a simple rc file with variable definitions
+        can be used to declare a set of parameters and initialize them with
+        default values (e.g. \"var=value\"). Empty values (\"var=\") can be
+        provided for secrets or parameters without default values:
+
+          $ parmdb --init=param_definitions.rc
+          $ parmdb --init=secret_declarations.rc --secret
+
+        All variables in param_definitions.rc and secret_declarations.rc will
+        now have a file in the parameters store. The --init option causes the
+        file to be \"sourced\", so definitions can use parameter references,
+        command interpolation, etc.
+
+        When running the container, an entrypoint script can load parameters
+        from both files and/or the environment. The --load-file option can
+        read shell-like rc files, but will not do any special parameter or
+        command interpolation:
+          
+          #!/bin/sh
+             .
+             .
+             .
+          parmdb --load-file=/run/secrets/runtime.rc
+          parmdb --load-env
+
+        An entrypoint script can copy all parameters to an application's
+        environment if that's what the application expects; if this is done
+        using \"exec\", the environment variables will be isolated to the
+        application:
+
+          #!/bin/sh
+             .
+             .
+             .
+          $ exec parmdb --run myapp
 "
 ALL_USAGES="
-       $USAGE1
-       $USAGE2
-       $USAGE3
-       $USAGE4
-       $USAGE5
-       $USAGE6
-       $USAGE7
-       $USAGE8"
+        $USAGE1
+        $USAGE2
+        $USAGE3
+        $USAGE4
+        $USAGE5
+        $USAGE6
+        $USAGE7
+        $USAGE8"
 USAGE="Usage:$ALL_USAGES"
 
 SCRIPTDIR=`cd \`dirname $0\`; pwd`

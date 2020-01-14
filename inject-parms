@@ -4,15 +4,15 @@ DESC="Inject parameter values into template files"
 USAGE1="$PROG [--force] input output"
 USAGE2="$PROG -h|--help"
 HELP_TEXT="
-        Given one or more input files containing parameter reference strings of
-        the form \"$parmname\" or \"${parmname}\", and/or command interpolation
-        strings of the form \"\`command\'\", use \"parmdb\" parameters to
-        replace the strings with parameter values or command output,
-        respectively and write an output file for each input file.
-
-        Substitutions are processed exactly as if the input file contents
+        This script is meant to inject parameter values into configuration files
+        at runtime. Specifically, given one or more input files containing
+        parameter reference strings (e.g. \"\$parmname\" or \"\${parmname}\"),
+        and/or command interpolation strings of the form \"\`command\'\",
+        $PROG will replace the reference strings with parameter values or
+        command output, respectively, and write an output file for each input
+        file.  Substitutions are processed exactly as if the input file contents
         were in a shell here-document and all parmdb parameters were
-        environment variables.
+        shell variables.
 
         By default, $PROG will not overwrite an existing file; if the --force
         option is given, it will.
@@ -28,6 +28,11 @@ HELP_TEXT="
         that directory is used as an input file and the input directory is
         structure is copied to the output directory tree.
 
+        Note that *any* strings within an input file that look like parameter
+        references or command interpolations will be treated as such, so you
+        need to use shell backslash escapes on \"\$\" or \"\`\" characters if
+        you need to preserve them.
+
 PORTABILITY
         This script uses the \"here-document\" internally to handle parameter
         and command substitution. In at least some versions of the ash shell
@@ -39,6 +44,9 @@ ENVIRONMENT
         PARM_DB
             The path of the directory to use as the object store. Each
             parameter is a file in the directory.
+
+SEE ALSO
+        parmdb
 "
 SCRIPTDIR=`cd \`dirname $0\`; pwd`
 USAGE="Usage:
@@ -122,7 +130,7 @@ else
     echo "$PROG: $INARG: no such file or directory" >&2
 fi
 
-RAND=`random 8 | tr / =`
+RAND=`$SCRIPTDIR/random 8 | tr / =`
 TMPFILE=/tmp/inject-parms$RAND
 trap "rm -f $TMPFILE ; exit 1" 1 2 13 15
 echo "#!/bin/sh" >$TMPFILE

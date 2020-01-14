@@ -7,21 +7,22 @@ USAGE3="$PROG -I|?"
 DBPORT_DFLT=3306
 HELP_TEXT="
         $PROG is a simple wrapper script that initializes a temporary
-        mysql configuration file with values from the environment and then
-        invokes the actual mysql client.
+        mysql configuration file with values from the environment or
+        a \"parmdb\" parameter store and then invokes the actual mysql client.
 
         The --help command-line option will print help text for the wrapper
         script. The -I or -? options will print help text for the actual
         mysql client.
 
 ENVIRONMENT
-        The following environment variables are required; however, if the
-        any are missing but the PARM_DB variable is set, the script will
-        use the \"parmdb\" script to try loading these variables from the
-        \$PARM_DB parameter store.
+        Unless otherwise noted, the following environment variables are
+        required; however, if any are missing but the PARM_DB variable is set,
+        the script will use the \"parmdb\" script to try loading these
+        variables from the \$PARM_DB parameter store.
 
         DBLOGIN
             The mysql user to log in as.
+            
 
         DBHOST
             The hostname ofthe mysql server.
@@ -39,8 +40,10 @@ ENVIRONMENT
             The database name.
 
         PARM_DB
-            The path of the directory to use as a parameter store (see parmdb)
+            The path of the directory to use as a parmdb parameter store.
 
+SEE ALSO
+        parmdb
 "
 SCRIPTDIR=`cd \`dirname $0\`; pwd`
 
@@ -86,6 +89,7 @@ NAME
 SYNOPSIS
         $USAGE1
         $USAGE2
+        $USAGE3
 
 DESCRIPTION$HELP_TEXT
 EOF
