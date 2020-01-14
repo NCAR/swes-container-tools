@@ -65,7 +65,7 @@ if [ ":$MYSQL" = ":" ] ; then
         fi
     done
 fi
-if [ ":$MYSQL" = ":" ] ; then
+if [ ":$MYSQL" = ":" ] && [ ":$1" != ":--help" ] ; then
     echo "$PROG: cannot determine location of real mysql program" >&2
     exit 1
 fi
