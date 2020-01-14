@@ -14,6 +14,12 @@ jobs:
       - setup_remote_docker
 
       - run:
+          name: Configure git
+          command: |
+              git config --global user.email "sweg-ci@ucar.edu"
+              git config --global user.name "NCAR SWEG CI"
+
+      - run:
           name: Update configuration or run tests
           command: |
               ./getTZ --dump >./zoneinfo
@@ -29,8 +35,6 @@ jobs:
               fi
               if $install_zoneinfo ; then
                   mv zoneinfo .zoneinfo
-                  git config --global user.email "sweg-dev@ucar.edu"
-                  git config --global user.name "SWEG CI"
                   git add .zoneinfo
                   git commit -m 'Updated .zoneinfo'
                   mkdir -p ~/.ssh/
@@ -58,4 +62,18 @@ jobs:
                   docker run --rm --volumes-from scripts $baseimage /scripts/test/runalltests.sh
                   echo
               done
+
+      - run:
+          name: "Generate documentation"
+          command: |
+              set +e
+              git clone --depth 1 https://${GH_TOKEN}@github.com/NCAR/citools.git /usr/local/bin
+              REPO=gwilliam-ucar-edu/swes-container-tools
+              export REPO
+              git clone https://${GH_TOKEN}@github.com/$REPO.wiki.git /tmp/wiki
+              /usr/local/bin/citools-docgen --bindir=`pwd` /tmp/wiki
+              cd /tmp/wiki
+              git add .
+              git commit -m 'Latest doc build'
+              git push
                   
