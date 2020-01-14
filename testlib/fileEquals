@@ -1,7 +1,6 @@
 #!/bin/sh
-PROG="fileEquals"
-DESC="Check if two files contain exactly the same data"
-USAGE1="$PROG file1 file2"
+# fileEquals - Check if two files contain exactly the same data
+# Usage: fileEquals file1 file2
 
 if [ ":$TMPDIR" = ":" ] ; then
    echo "ERROR: TMPDIR environment variable must be set" >&2
