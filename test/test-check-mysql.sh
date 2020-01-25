@@ -59,7 +59,7 @@ else
     FAILURE
 fi
 
-SLEEP_SECS=1 export SLEEP_SECS
+DBCHECK_SLEEP_SECS=1 export DBCHECK_SLEEP_SECS
 DEFINE_TEST "when mysql returns 0, check-mysql -w 3 returns 0, no output"
 RUN $SCRIPTDIR/check-mysql -v -w3 </dev/null
 if gotExpectedOutput --retval --exact "0" && \
