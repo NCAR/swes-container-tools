@@ -19,8 +19,8 @@ HELP_TEXT="
 "
 SCRIPTDIR=`cd \`dirname $0\`; pwd`
 MYSQL="${MYSQL:-${SCRIPTDIR}/mysql}"
-SLEEP_SECS=${SLEEP_SECS:-10}
-TIMEOUT_SECS=0
+DBCHECK_SLEEP_SECS=${DBCHECK_SLEEP_SECS:-10}
+DBCHECK_TIMEOUT_SECS=0
 SILENT=true
 
 while [ $# != 0 ] ; do
@@ -41,7 +41,7 @@ EOF
             exit 1 ;;
 
         -w[0-9]*)
-            TIMEOUT_SECS=`expr "$arg" : '-w\(.*\)'` ;;
+            DBCHECK_TIMEOUT_SECS=`expr "$arg" : '-w\(.*\)'` ;;
 
         -[a-z]?*)
             opt=`expr "$arg" : '-\([a-z]\).*'`
@@ -50,11 +50,11 @@ EOF
             shift ;;
 
         -w)
-            TIMEOUT_SECS="${1:-0}"
+            DBCHECK_TIMEOUT_SECS="${1:-0}"
             shift ;;
 
         --wait=[0-9]*)
-            TIMEOUT_SECS=`expr "$arg" : '--wait=\(.*\)'` ;;
+            DBCHECK_TIMEOUT_SECS=`expr "$arg" : '--wait=\(.*\)'` ;;
 
         -v|--verbose)
             SILENT=false ;;
@@ -69,7 +69,7 @@ EOF
             exit 1 ;;
     esac
 done
-expr "$TIMEOUT_SECS" : '[0-9][0-9]*$' >/dev/null 2>&1
+expr "$DBCHECK_TIMEOUT_SECS" : '[0-9][0-9]*$' >/dev/null 2>&1
 if [ $? != 0 ] ; then
     echo "$PROG: invalid argument to -w|--wait: expecting unsigned integer" >&2
     exit 1
@@ -85,11 +85,11 @@ while true ; do
     if [ ":$out" != ":0" ] ; then
         exit 0
     fi
-    if [ $elapsed -ge $TIMEOUT_SECS ] ; then
+    if [ $elapsed -ge $DBCHECK_TIMEOUT_SECS ] ; then
         exit 1
     fi
-    sleep ${SLEEP_SECS}
-    elapsed=`expr $elapsed + ${SLEEP_SECS}`
+    sleep ${DBCHECK_SLEEP_SECS}
+    elapsed=`expr $elapsed + ${DBCHECK_SLEEP_SECS}`
 done
 
 
