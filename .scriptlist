@@ -1,0 +1,10 @@
+.parmdb-cmdline.rc
+.parmdb-getopts.rc
+.zoneinfo
+check-mysql
+echo-n
+getTZ
+inject-parms
+mysql
+parmdb
+random
