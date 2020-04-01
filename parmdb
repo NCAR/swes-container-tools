@@ -16,7 +16,7 @@ HELP_TEXT="
         parameters supplied via environment variables or via files (e.g.
         /run/secrets/*). Specifically, parameter values can be injected into
         a container in various ways, and applications can access parameters
-        in various ways, without coupling the inject method and the access
+        in various ways, without coupling the injection method and the access
         method.
 
         Every parameter name consist of an alphabetic character followed by
@@ -60,7 +60,8 @@ HELP_TEXT="
 
         -s|--secret
             When used with -p|--put or -i|--init, the parameters are marked
-            as secret; their value will be shown by default (see -l|--list).
+            as secret; their values will not be shown by default (see
+            -l|--list).
 
         -f|--load-file=filename
             Read parameter values from the named file and add them to the

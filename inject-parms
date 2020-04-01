@@ -4,15 +4,14 @@ DESC="Inject parameter values into template files"
 USAGE1="$PROG [--force] input output"
 USAGE2="$PROG -h|--help"
 HELP_TEXT="
-        This script is meant to inject parameter values into configuration files
-        at runtime. Specifically, given one or more input files containing
-        parameter reference strings (e.g. \"\$parmname\" or \"\${parmname}\"),
-        and/or command interpolation strings of the form \"\`command\'\",
-        $PROG will replace the reference strings with parameter values or
-        command output, respectively, and write an output file for each input
-        file.  Substitutions are processed exactly as if the input file contents
-        were in a shell here-document and all parmdb parameters were
-        shell variables.
+        This script is meant to inject parameter values into configuration
+        files at runtime. Specifically, given one or more input files
+        containing parameter reference strings (e.g. \"\$parmname\" or
+        \"\${parmname}\"), and/or command interpolation strings of the form
+        \"\`command\'\", $PROG will replace the reference strings with
+        parameter values or command output, respectively, and write an output
+        file for each input file. Substitutions are processed internally
+        using a shell here-document and shell variables.
 
         By default, $PROG will not overwrite an existing file; if the --force
         option is given, it will.

@@ -1,0 +1,61 @@
+#!/bin/sh
+PROG=install-tools
+DESC="Install swes-container-tools into a target directory"
+USAGE1="$PROG <bindir>"
+USAGE2="$PROG -h|--help"
+HELP_TEXT="
+        This script just copies the scripts in the swes-container-tools repo
+        to a named directiry and ensures they are executable.
+"
+
+BINDIR=
+
+case $1 in
+    -h|--help)
+        cat <<EOF
+NAME
+        $PROG - $DESC
+
+SYNOPSIS
+        $USAGE1
+        $USAGE2
+
+DESCRIPTION$HELP_TEXT
+EOF
+        exit 0 ;;
+    -*)
+        echo "$PROG: unknown option: $1" >&2
+        exit 1 ;;
+    *)
+        BINDIR="$1"
+esac
+
+SCRIPTDIR=`cd \`dirname $0\`; pwd`
+
+if [ ":$BINDIR" = ":" ] ; then
+    echo "$PROG: directory argument is required" >&2
+    exit 1
+fi
+if [ ! -d "$BINDIR" ] ; then
+    echo "$PROG: $BINDIR is not a directory" >&2
+    exit 1
+fi
+
+nfail=0
+SCRIPTLIST=`cat ${SCRIPTDIR}/.scriptlist`
+for script in $SCRIPTLIST ; do
+    if [ ":$script" != ":" ] ; then
+        err=y
+        cp ${SCRIPTDIR}/${script} ${BINDIR}
+        if [ $? = 0 ] ; then
+            chmod +x ${BINDIR}/${script}
+            if [ $? = 0 ] ; then
+                err=n
+            fi
+        fi
+        if [ $err = y ] ; then
+            nfail=`expr ${nfail} + 1`
+        fi
+    fi
+done
+exit ${nfail}
