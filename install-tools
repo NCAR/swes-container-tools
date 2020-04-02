@@ -4,8 +4,12 @@ DESC="Install swes-container-tools into a target directory"
 USAGE1="$PROG <bindir>"
 USAGE2="$PROG -h|--help"
 HELP_TEXT="
-        This script just copies the scripts in the swes-container-tools repo
-        to a named directiry and ensures they are executable.
+        This script copies the scripts in the swes-container-tools repo
+        to a named directory and ensures they are executable.
+
+        It also installs the aws cli.
+
+        The script should be run as root.
 "
 
 BINDIR=
@@ -58,4 +62,12 @@ for script in $SCRIPTLIST ; do
         fi
     fi
 done
+cp ${SCRIPTDIR}/awscliv2.zip ${BINDIR}
+cd ${SCRIPTDIR}
+unzip awscliv2.zip
+./aws/install --bin-dir ${BINDIR}
+if [ ! -f ${BINDIR}/aws ] ; then
+    nfail=`expr ${nfail} + 1`
+fi
+
 exit ${nfail}
