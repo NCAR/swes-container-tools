@@ -1,6 +1,7 @@
 .parmdb-cmdline.rc
 .parmdb-getopts.rc
 .zoneinfo
+buildinfo
 check-mysql
 echo-n
 getTZ
