@@ -7,7 +7,7 @@ HELP_TEXT="
         This script copies the scripts in the swes-container-tools repo
         to a named directory and ensures they are executable.
 
-        It also installs the aws cli.
+        It also installs the aws cli and the jq binary.
 
         The script should be run as root.
 "
@@ -67,6 +67,11 @@ cd ${SCRIPTDIR}
 unzip awscliv2.zip
 ./aws/install --bin-dir ${BINDIR}
 if [ ! -f ${BINDIR}/aws ] ; then
+    nfail=`expr ${nfail} + 1`
+fi
+cp ${SCRIPTDIR}/jq-* ${BINDIR}/jq
+chmod +x ${BINDIR/jq
+if [ ! -x ${BINDIR}/jq ] ; then
     nfail=`expr ${nfail} + 1`
 fi
 
