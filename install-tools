@@ -70,7 +70,7 @@ if [ ! -f ${BINDIR}/aws ] ; then
     nfail=`expr ${nfail} + 1`
 fi
 cp ${SCRIPTDIR}/jq-* ${BINDIR}/jq
-chmod +x ${BINDIR/jq
+chmod +x ${BINDIR}/jq
 if [ ! -x ${BINDIR}/jq ] ; then
     nfail=`expr ${nfail} + 1`
 fi
