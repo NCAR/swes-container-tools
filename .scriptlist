@@ -6,6 +6,7 @@ check-mysql
 echo-n
 getTZ
 inject-parms
+load-certs
 mysql
 parmdb
 random

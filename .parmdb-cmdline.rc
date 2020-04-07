@@ -3,16 +3,18 @@
 case $MODE in
     '')
         cat <<EOF >&2
-$PROG: one of -p|--put, -g|--get, -i|--init, -f|--load-file,
-         -e|--load-env, -l|--list, -r|--run, or -h|--help is required
+$PROG: one of -p|--put, -g|--get, -i|--init, -a|--load-assignments,
+         -e|--load-env, -f|--load-file, -l|--list, -r|--run, or -h|--help
+         is required
 $USAGE
 EOF
         exit 1 ;;
     ?)  : ;;
     *)
         cat <<EOF >&2
-$PROG: only one of -p|--put, -g|--get, -i|--init, -f|--load-file,
-         -e|--load-env, -l|--list, -r|--run, or -h|--help is allowed
+$PROG: only one of -p|--put, -g|--get, -i|--init, -a|--load-assignments,
+         -e|--load-env, -f|--load-file, -l|--list, -r|--run, or -h|--help
+         is allowed
 $USAGE
 EOF
         exit 1 ;;

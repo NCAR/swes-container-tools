@@ -75,16 +75,16 @@ optarg=1
 opt=s
 optarg=1"
 
-test15="$PARMDB --load-file=foo.rc"
-expected15="opt=f
+test15="$PARMDB --load-assignments=foo.rc"
+expected15="opt=a
 optarg=foo.rc"
 
-test16="$PARMDB -f=foo.rc"
-expected16="opt=f
+test16="$PARMDB -a=foo.rc"
+expected16="opt=a
 optarg=foo.rc"
 
-test17="$PARMDB -f foo.rc"
-expected17="opt=f
+test17="$PARMDB -a foo.rc"
+expected17="opt=a
 optarg=foo.rc"
 
 test18="$PARMDB -e"
@@ -101,146 +101,157 @@ optarg=1
 opt=e
 optarg=1"
 
-test21="$PARMDB -lnames"
-expected21="opt=l
-optarg=names"
+test21="$PARMDB -f=foo"
+expected21="opt=f
+optarg=foo"
 
-test22="$PARMDB -l names"
-expected22="opt=l
-optarg=names"
+test22="$PARMDB --load-file=foo"
+expected22="opt=f
+optarg=foo"
 
-test23="$PARMDB --list"
+test23="$PARMDB -lnames"
 expected23="opt=l
-optarg=values"
+optarg=names"
 
-test24="$PARMDB --list=names"
+test24="$PARMDB -l names"
 expected24="opt=l
 optarg=names"
 
-test25="$PARMDB -r foo"
-expected25="opt=r
+test25="$PARMDB --list"
+expected25="opt=l
+optarg=values"
+
+test26="$PARMDB --list=names"
+expected26="opt=l
+optarg=names"
+
+test27="$PARMDB -r foo"
+expected27="opt=r
 optarg=1"
 
-test26="$PARMDB --run foo"
-expected26="opt=r
+test28="$PARMDB --run foo"
+expected28="opt=r
 optarg=1"
 
-test27="$PARMDB -h"
-expected27="opt=h
+test29="$PARMDB -h"
+expected29="opt=h
 optarg=1"
 
-test28="$PARMDB --help"
-expected28="opt=h
+test30="$PARMDB --help"
+expected30="opt=h
 optarg=1"
 
-TEST_OPT_PROCESSING_MAX=28
+TEST_OPT_PROCESSING_MAX=30
 
 
-TEST_COMMAND_LINE_MIN=29
+TEST_COMMAND_LINE_MIN=31
 
-test29="$PARMDB"
-error29="is required"
+test31="$PARMDB"
+error31="is required"
 
-test30="$PARMDB -gfoo -pbar"
-error30="is allowed"
-
-test31="$PARMDB -pbar -ifoo"
-error31="is allowed"
-
-test32="$PARMDB -ifoo -fbar"
+test32="$PARMDB -gfoo -pbar"
 error32="is allowed"
 
-test33="$PARMDB -fbar -e"
+test33="$PARMDB -pbar -ifoo"
 error33="is allowed"
 
-test34="$PARMDB -e -lnames"
+test34="$PARMDB -ifoo -abar"
 error34="is allowed"
 
-test35="$PARMDB -lnames -r"
+test35="$PARMDB -abar -e"
 error35="is allowed"
 
-test36="$PARMDB -rh"
+test36="$PARMDB -e -ffoo"
 error36="is allowed"
 
-test37="$PARMDB -lvalues"
-expected37="l_opt=values"
+test37="$PARMDB -ffoo -lnames"
+error37="is allowed"
 
-test38="$PARMDB -lv"
-expected38="l_opt=values"
+test38="$PARMDB -lnames -r"
+error38="is allowed"
 
-test39="$PARMDB -lnames"
-expected39="l_opt=names"
+test39="$PARMDB -rh"
+error39="is allowed"
 
-test40="$PARMDB -ln"
-expected40="l_opt=names"
+test40="$PARMDB -lvalues"
+expected40="l_opt=values"
 
-test41="$PARMDB -lsecrets"
-expected41="l_opt=secrets"
+test41="$PARMDB -lv"
+expected41="l_opt=values"
 
-test42="$PARMDB -ls"
-expected42="l_opt=secrets"
+test42="$PARMDB -lnames"
+expected42="l_opt=names"
 
-test43="$PARMDB -lallvalues"
-expected43="l_opt=allvalues"
+test43="$PARMDB -ln"
+expected43="l_opt=names"
 
-test44="$PARMDB -la"
-expected44="l_opt=allvalues"
+test44="$PARMDB -lsecrets"
+expected44="l_opt=secrets"
 
-test45="$PARMDB -lputs"
-expected45="l_opt=puts"
+test45="$PARMDB -ls"
+expected45="l_opt=secrets"
 
-test46="$PARMDB -lp"
-expected46="l_opt=puts"
+test46="$PARMDB -lallvalues"
+expected46="l_opt=allvalues"
 
-test47="$PARMDB -lbad"
-error47="value must be one of"
+test47="$PARMDB -la"
+expected47="l_opt=allvalues"
 
-test48="$PARMDB -gfoo -c"
-error48="can only be used with"
+test48="$PARMDB -lputs"
+expected48="l_opt=puts"
 
-test49="$PARMDB -ffoo -c"
-error49="can only be used with"
+test49="$PARMDB -lp"
+expected49="l_opt=puts"
 
-test50="$PARMDB -ec"
-error50="can only be used with"
+test50="$PARMDB -lbad"
+error50="value must be one of"
 
-test51="$PARMDB -lv -c"
+test51="$PARMDB -gfoo -c"
 error51="can only be used with"
 
-test52="$PARMDB -rc"
+test52="$PARMDB -afoo -c"
 error52="can only be used with"
 
-test53="$PARMDB -gfoo -s"
+test53="$PARMDB -ec"
 error53="can only be used with"
 
-test54="$PARMDB -ffoo -s"
+test54="$PARMDB -lv -c"
 error54="can only be used with"
 
-test55="$PARMDB -es"
+test55="$PARMDB -rc"
 error55="can only be used with"
 
-test56="$PARMDB -lv -s"
+test56="$PARMDB -gfoo -s"
 error56="can only be used with"
 
-test57="$PARMDB -rs"
+test57="$PARMDB -afoo -s"
 error57="can only be used with"
 
-test58="$PARMDB -pfoo"
-error58="requires an argument of the form"
+test58="$PARMDB -es"
+error58="can only be used with"
 
-test59="$PARMDB -pfoo.=val"
-error59="does not specify a valid parameter name"
+test59="$PARMDB -lv -s"
+error59="can only be used with"
 
-test60="$PARMDB -gfoo."
-error60="does not specify a valid parameter name"
+test60="$PARMDB -rs"
+error60="can only be used with"
 
-test61="$PARMDB --last=names"
-error61="does not specify a valid parameter name"
+test61="$PARMDB -pfoo"
+error61="requires an argument of the form"
 
-test62="$PARMDB --env-default"
-error62="can only be used with"
+test62="$PARMDB -pfoo.=val"
+error62="does not specify a valid parameter name"
 
-TEST_COMMAND_LINE_MAX=62
+test63="$PARMDB -gfoo."
+error63="does not specify a valid parameter name"
+
+test64="$PARMDB --last=names"
+error64="does not specify a valid parameter name"
+
+test65="$PARMDB --env-default"
+error65="can only be used with"
+
+TEST_COMMAND_LINE_MAX=65
 
 testnum=0
 npassed=0

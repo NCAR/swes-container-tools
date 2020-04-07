@@ -18,13 +18,13 @@ while [ $# != 0 ] ; do
             opt=`expr "$arg" : '-\(.\)'`
             opt=`expr "$arg" : '-\(.\)'`
             optarg=1 ;;
-        -[gpifl]=*)
+        -[gpiafl]=*)
             opt=`expr "$arg" : '-\(.\)=.*'`
             optarg=`expr "$arg" : '-.=\(.*\)'` ;;
-        -[gpifl]?*)
+        -[gpiafl]?*)
             opt=`expr "$arg" : '-\(.\).*'`
             optarg=`expr "$arg" : '-.\(.*\)'` ;;
-        -[gpifl])
+        -[gpiafl])
             opt=`expr "$arg" : '-\(.\)'`
             optarg="$1"
             shift ;;
@@ -46,7 +46,7 @@ while [ $# != 0 ] ; do
     case $longopt in
         '')
             : ;;
-        get|env-default|put|init|constant|secret|load-file|load-env|list|run|help)
+        get|env-default|put|init|constant|secret|load-assignments|load-env|load-file|list|run|help)
             : ;;
         *)
             echo "$PROG: unknown option: --$longopt" >&2
@@ -58,7 +58,7 @@ while [ $# != 0 ] ; do
     fi
     eval ${opt}_opt="'${optarg}'"
     case $opt in
-        [gpifl])
+        [gpiafl])
             if [ ":${optarg}" = ":" ] ; then
                 echo "$PROG: -$opt requires an argument" >&2
                 exit 1

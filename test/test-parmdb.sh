@@ -289,8 +289,8 @@ var3=val3\
  with a newline
 EOF
 
-DEFINE_TEST "when --load-file with file, no output no error"
-RUN parmdb -f ${TMPDIR}/loadfile1.rc
+DEFINE_TEST "when --load-assigments with file, no output no error"
+RUN parmdb -a ${TMPDIR}/loadfile1.rc
 
 if noOutput && noOutput --error ; then
     SUCCESS
@@ -298,7 +298,7 @@ else
     FAILURE
 fi
 
-DEFINE_TEST "when --load-file set three undefined parms, nothing is set"
+DEFINE_TEST "when --load-assignments set three undefined parms, nothing is set"
 RUN parmdb -lnames
 
 expected="foo
@@ -314,8 +314,8 @@ parmdb -p var1=init
 parmdb -p var2=init
 parmdb -p var3=init
 
-DEFINE_TEST "when --load-file with file, no output no error"
-RUN parmdb -f ${TMPDIR}/loadfile1.rc
+DEFINE_TEST "when --load-assignments with file, no output no error"
+RUN parmdb -a ${TMPDIR}/loadfile1.rc
 
 if noOutput && noOutput --error ; then
     SUCCESS
@@ -323,7 +323,7 @@ else
     FAILURE
 fi
 
-DEFINE_TEST "when --load-file set three defined parms, all are set"
+DEFINE_TEST "when --load-assignments set three defined parms, all are set"
 RUN parmdb -lvalues
 exp3='var3='\''val3
 with a newline'
@@ -365,6 +365,53 @@ DEFINE_TEST "when --load-env set undefined parms, none are set"
 RUN parmdb -gvar4
 
 if noOutput ; then
+    SUCCESS
+else
+    FAILURE
+fi
+
+echo baz | tr -d '\n' >${TMPDIR}/fubar
+
+DEFINE_TEST "when --load-file with file, no output no error"
+RUN parmdb -f ${TMPDIR}/fubar
+
+if noOutput && noOutput --error ; then
+    SUCCESS
+else
+    FAILURE
+fi
+
+DEFINE_TEST "when --load-file set undefined parm, nothing is set"
+RUN parmdb -lnames
+
+expected="foo
+greeting
+indent
+var1
+var2
+var3"
+
+if gotExpectedOutput --exact "$expected" ; then
+    SUCCESS
+else
+    FAILURE
+fi
+
+parmdb -p fubar=init
+
+DEFINE_TEST "when --load-file with file, no output no error"
+RUN parmdb -f ${TMPDIR}/fubar
+
+if noOutput && noOutput --error ; then
+    SUCCESS
+else
+    FAILURE
+fi
+
+DEFINE_TEST "when --load-file sets defined parm, parm is set"
+RUN parmdb -lvalues
+
+if gotExpectedOutput --contains "fubar='baz'" ; then
     SUCCESS
 else
     FAILURE

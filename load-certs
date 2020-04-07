@@ -1,0 +1,94 @@
+#!/bin/sh
+PROG=load-certs
+DESC="Load TLS certificates for a Docker container"
+USAGE1="$PROG indir tlsdir"
+USAGE2="$PROG -h|--help"
+HELP_TEXT="
+        Install TLS key and certificate files to an appropriate location.
+        The following arguments are supported:
+
+        indir
+            The input directory, which will be searched for any instances of
+            a <name>.key file and either a matching <name>.bundle.pem file or 
+            matching <name>.crt and <name>.CA.crt files. When a bundle.pem
+            file is found, site cert (.crt) and chain (CA.crt) will be
+            extracted. All found key/cert file sets will be installed.
+
+        tlsdir
+            The installation directory; key files will be copied to
+            <tlsdir>/private/, and cert files will be copied to
+            <tlsdir>/certs/.
+"
+USAGE="Usage:
+  $USAGE1
+  $USAGE2
+"
+
+case $1 in
+    -h|--help)
+        cat <<EOF
+NAME
+        $PROG - $DESC
+
+SYNOPSIS
+        $USAGE1
+        $USAGE2
+
+DESCRIPTION$HELP_TEXT
+EOF
+        exit 1 ;;
+
+    -*)
+        echo "$PROG: invalid option: $arg" >&2
+        echo "$USAGE" >&2
+        exit 1 ;;
+esac
+
+if [ $# != 2 ] ; then
+    echo "$PROG: expecting two arguments" >&2
+    echo "$USAGE" >&2
+    exit 1
+fi
+
+basedir=`pwd`
+
+cd "$1" || exit 1
+indir=`pwd`
+cd ${basedir} || exit 1
+
+mkdir -p "$2" || exit 1
+cd "$2" || exit 1
+outdir=`pwd`
+if [ ! -d private ] ; then
+    mkdir -p private || exit 1
+fi
+if [ ! -d certs ] ; then
+    mkdir -p certs || exit 1
+fi
+cd "${basedir}" || exit 1
+
+cd "${indir}" || exit 1
+keyFiles=`ls -1 *.key`
+for keyFile in ${keyFiles} ; do
+    if [ -f "${keyFile}" ] ; then
+        name=`basename "${keyFile}" .key`
+        if [ -f "${name}.crt" ] && [ -f "${name}.CA.crt" ] ; then
+            cp "${name}.crt" "${name}.CA.crt" "${outdir}/certs" || exit 1
+        elif [ -f "${name}.bundle.pem" ] ; then
+            crtline=`grep -n '^-----BEGIN CERTIFICATE-----' "${name}.bundle.pem" | sed -e 's/:.*//' | tail -1`
+            if [ ":$crtline" = ":" ] || [ ":$crtline" = ":1" ] ; then
+                echo "$PROG: ${name}.bundle.pem: unexpected format" >&2
+                exit 1
+            fi
+            lastCAline=`expr $crtline - 1`
+            sed -n -e "1,${lastCAline}p" "${name}.bundle.pem" >"${outdir}/certs/${name}.CA.crt" || exit 1
+            sed -n -e "${crtline},\$p" "${name}.bundle.pem" >"${outdir}/certs/${name}.crt" || exit 1
+        fi
+        cp "${keyFile}" "${outdir}/private" || exit 1
+        chmod 400 "${outdir}/private/${keyFile}" || exit 1
+    fi
+done
+
+cd "${basedir}" || exit 1
+
+exit 0    

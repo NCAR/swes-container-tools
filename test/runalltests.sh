@@ -8,6 +8,7 @@ TESTS="
   test-mysql.sh
   test-check-mysql.sh
   test-inject-parms.sh
+  test-load-certs.sh
 "
 TESTDIR=`cd \`dirname $0\`; pwd`
 
