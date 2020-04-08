@@ -1,0 +1,196 @@
+#!/bin/sh
+PROG=load-runtime-parms
+DESC="Load parameters from the environment, from files, and/or from AWS S3"
+USAGE1="$PROG [-h|--help]"
+HELP_TEXT="
+        This script is meant to be used in a container at runtime to load
+        configuration parameters and secrets from the environment, from
+        files, and/or from AWS S3. Parameters are stored using the parmdb
+        script.
+
+        The environment is first checked for defined parameters and loaded
+        using \"parmdb --load-env\". Note that if the AWS's Parameter Store
+        is used to inject parameters, they will generally be defined via
+        the environment; this is the recommended way to inject secrets into
+        a service running on AWS.
+
+        If the environment variable (or parameter) AWS_S3_BUCKET is defined,
+        parameters are assumed to be stored on Amazon S3 under the given
+        bucket name. All files in the \$AWS_S3_BUCKET bucket are recursively
+        copied to \${SECRETS_DIR}/${APPNAME}/s3/.
+
+        Note that the \${SECRETS_DIR} directory is generally assumed to be part
+        of a non-persistent file-system, and is expected to be available even
+        in containers that run in environments without persistent volume
+        support (such as AWS ECS Fargate).
+
+        Whether or not files are downloaded from S3, parameters are next loaded
+        from the \${SECRETS_DIR} directory and the \${SECRETS_DIR}/\${APPNAME}
+        tree.
+
+        Parameters can be stored in files in one of two ways: in a file/object
+        with a .cnf suffix, or in a file/object having the name of a parameter.
+        In the case of a .cnf file, any number of parameter definitions appear
+        in the file using shell-like \"assignment\" statements of the form
+        \"parmname=value\". These files are loaded using \"parmdb
+        --load-assignments=file\". In the case of files having parameter names,
+        each file defines one parameter, and the entire file content defines
+        the parameter value; these files are loaded using \"parmdb
+        --load-file=file\". Refer to the parmdb script for more details.
+
+ENVIRONMENT
+      PARM_DB
+          The directory containing the parmdb \"object database\". This is
+          required.
+
+      SECRETS_DIR
+          A directory containing secrets and downloaded runtime parameter
+          definitions. This is required, and can be an environment variable
+          or a parmdb parameter.
+
+      APPNAME
+          The name of the application being configured. This is required, and
+          can be an environment variable or a parmdb parameter.
+
+      AWS_S3_BUCKET
+          If defined and not empty, the name of an Amazon S3 bucket containing
+          parameters to download, which should be of the form \"s3://<bucket>\"
+          or \"s3://<bucket>/<prefix>\". This is optional, and can be an
+          environment variabe or a parmdb parameter.
+
+      AWS_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY
+          These are optional unless a AWS_S3_BUCKET is defined, in which case
+          they are used to authenticate the AWS cli.
+
+      AWS_DEFAULT_REGION
+      AWS_DEFAULT_OUTPUT
+          These are ignored unless a AWS_S3_BUCKET is defined, in which case
+          they specify the region and output format for the aws cli.
+"
+USAGE="Usage:
+  $USAGE1
+"
+
+case $1 in
+    -h|--help)
+        cat <<EOF
+NAME
+        $PROG - $DESC
+
+SYNOPSIS
+        $USAGE1
+
+DESCRIPTION$HELP_TEXT
+EOF
+        exit 1 ;;
+
+    -*)
+        echo "$PROG: invalid option: $arg" >&2
+        echo "$USAGE" >&2
+        exit 1 ;;
+esac
+
+SCRIPTDIR=`cd \`dirname $0\`; pwd`
+BASE_DIR=`pwd`
+
+if [ ":$PARM_DB" = ":" ] ; then
+    echo "$PROG: environment variable PARM_DB must be set" >&2
+    exit 1
+fi
+cd "${PARM_DB}" || exit 1
+PARM_DB=`pwd`
+cd "${BASE_DIR}" || exit 1
+
+errcheck=:
+for parm in SECRETS_DIR APPNAME ; do
+    eval val="\"\$${parm}\""
+    if [ ":$val" = ":" ] ; then
+        val=`${SCRIPTDIR}/parmdb --get=${parm}`
+        if [ ":$val" != ":" ] ; then
+            eval ${parm}="\"${val}\""
+            export ${parm}
+        else
+            echo "$PROG: $parm must be set" >&2
+            errcheck="exit 1"
+        fi
+    fi
+done
+$errcheck
+
+if [ ":${AWS_S3_BUCKET}" = ":" ] ; then
+    AWS_S3_BUCKET=`${SCRIPTDIR}/parmdb --get=AWS_S3_BUCKET`
+    if [ ":${AWS_S3_BUCKET}" != ":" ] ; then
+        export AWS_S3_BUCKET
+    fi
+fi
+if [ ":${AWS_S3_BUCKET}" != ":" ] ; then
+    case $AWS_S3_BUCKET in
+        s3://*)
+            : ;;
+        //*)
+            AWS_S3_BUCKET=s3:${AWS_S3_BUCKET} ;;
+        /*)
+            AWS_S3_BUCKET=s3:/${AWS_S3_BUCKET} ;;
+        *)
+            echo "$PROG: invalid AWS_S3_BUCKET value: $AWS_S3_BUCKET" >&2
+            exit 1 ;;
+    esac
+    export AWS_S3_BUCKET
+    for parm in AWS_ACCESS_KEY_ID \
+                AWS_SECRET_ACCESS_KEY \
+                AWS_DEFAULT_REGION \
+                AWS_DEFAULT_OUTPUT ; do
+        eval val="\"\$${parm}\""
+        if [ ":$val" = ":" ] ; then
+            val=`${SCRIPTDIR}/parmdb --get=${parm}`
+            if [ ":$val" != ":" ] ; then
+                eval ${parm}="\"${val}\""
+                export ${parm}
+            else
+                echo "$PROG: $parm must be set when AWS_S3_BUCKET is set" >&2
+                errcheck="exit 1"
+            fi
+        fi
+    done
+fi
+
+${SCRIPTDIR}/parmdb --load-env || exit 1
+
+
+if [ ":${AWS_S3_BUCKET}" != ":" ] ; then
+    mkdir -p "${SECRETS_DIR}/${APPNAME}/s3"
+    aws s3 cp "${AWS_S3_BUCKET}" "${SECRETS_DIR}/${APPNAME}/s3" --recursive ||
+        exit 1
+fi
+
+if [ -d "${SECRETS_DIR}/${APPNAME}" ] ; then
+    SecretsDirs="${SECRETS_DIR} `find ${SECRETS_DIR}/${APPNAME} -type d -print`"
+else
+    SecretsDirs="${SECRETS_DIR}"
+fi
+for dir in ${SecretsDirs} ; do
+    cd "${dir}" || exit 1
+
+    for cnffile in *.cnf ; do
+        if [ ":$cnffile" = ':*.cnf' ] ; then
+            break
+        fi
+        ${SCRIPTDIR}/parmdb --load-assignments="${cnffile}"
+    done
+
+    cd "${BASE_DIR}" || exit 1
+done
+
+for dir in ${SecretsDirs} ; do
+    cd "${dir}" || exit 1
+
+    for parmfile in [a-zA-Z]* ; do
+        if [ -f "${PARM_DB}/${parmfile}" ] ; then
+            ${SCRIPTDIR}/parmdb --load-file="${parmfile}"
+        fi
+    done
+
+    cd "${BASE_DIR}" || exit 1
+done
+

@@ -450,7 +450,7 @@ for parm in ${PARM_LIST} ; do
             eval is_defined=\"\${IS_DEFINED_${parm}}\"
             eval is_constant=\"\${IS_CONSTANT_${parm}}\"
             dowrite=n
-            if [ ! -f "${parmfile}" ] ; then
+            if [ ! -f "${parmfile}" ] || [ ! -s "${parmfile}" ] ; then
                 :> ${parmfile} || exit 1
                 chmod 644 "${parmfile}" || exit 1
                 dowrite=y

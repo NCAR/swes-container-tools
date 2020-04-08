@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Fake for testing aws cli interactions
+#
+
+if [ ":$1" = ":--init-test" ] ; then
+    rm -f $TMPDIR/aws.out
+    exit 0
+fi
+if [ ":$1" = ":--show-test" ] ; then
+    cat $TMPDIR/aws.out
+    exit 0
+fi
+echo aws "$@" >>$TMPDIR/aws.out
+
