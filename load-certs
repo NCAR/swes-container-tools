@@ -68,7 +68,7 @@ fi
 cd "${basedir}" || exit 1
 
 cd "${indir}" || exit 1
-keyFiles=`ls -1 *.key`
+keyFiles=`ls -1 *.key 2>/dev/null`
 for keyFile in ${keyFiles} ; do
     if [ -f "${keyFile}" ] ; then
         name=`basename "${keyFile}" .key`
