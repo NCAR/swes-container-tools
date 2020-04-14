@@ -16,7 +16,7 @@ HELP_TEXT="
         By default, $PROG will not overwrite an existing file; if the --force
         option is given, it will.
 
-        $PROG takes two arguments. The first argument in an input file or
+        $PROG takes two arguments. The first argument is an input file or
         directory, and the second is an output file or directory. The second
         argument cannot be a file if an input directory is specified.
 
@@ -111,12 +111,14 @@ if [ ":$INARG" = ":" ] || [ ":$OUTARG" = ":" ] ; then
     exit 1
 fi
 
+INDIR=
 OUTPATH=
+OUTDIR=
 if [ -f "$INARG" ] ; then
-    infiles="$INARG"
+    INDIR=`dirname "$INARG"`
+    infiles=`basename "$INARG"`
     if [ -d "$OUTARG" ] || [ ! -e "$OUTARG" ] ; then
-        b=`basename ${INARG}`
-        OUTPATH="${OUTARG}/${b}"
+        OUTDIR="$OUTARG"
     else
         OUTPATH="$OUTARG"
     fi
@@ -125,6 +127,8 @@ elif [ -d "$INARG" ] ; then
         echo "$PROG: $OUTARG: output file not allowed when input argument is a directory" >&2
         exit 1
     fi
+    INDIR="$INARG"
+    OUTDIR="$OUTARG"
     startdir=`pwd`
     cd ${INARG} || exit 1
     infiles=`find -L . -type f -print | sed 's:^./::'`
@@ -141,13 +145,9 @@ echo "unset IFS" >>$TMPFILE
 chmod 700 $TMPFILE
 EOFMARK="EOF_$RAND"
 for infile in ${infiles} ; do
-    if [ -d "$INARG" ] ; then
-        inpath="${INARG}/${infile}"
-    else
-        inpath="${INARG}"
-    fi
-    if [ ":$OUTPATH" = ":" ] ; then
-        OUTPATH="${OUTARG}/${infile}"
+    inpath="${INDIR}/${infile}"
+    if [ ":$OUTDIR}" != ":" ] ; then
+        OUTPATH="${OUTDIR}/${infile}"
     fi
     outdir=`dirname "$OUTPATH"`
 
