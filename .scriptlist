@@ -1,8 +1,9 @@
-.parmdb-cmdline.rc
-.parmdb-getopts.rc
-.zoneinfo
+lib/parmdb-cmdline.rc
+lib/parmdb-getopts.rc
+lib/zoneinfo
 buildinfo
 check-mysql
+define-parms
 echo-n
 getTZ
 inject-parms

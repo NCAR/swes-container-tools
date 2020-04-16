@@ -44,6 +44,11 @@ if [ ! -d "$BINDIR" ] ; then
     echo "$PROG: $BINDIR is not a directory" >&2
     exit 1
 fi
+mkdir -p "${BINDIR}/lib"
+if [ ! -d "${BINDIR}/lib" ] ; then
+    echo "$PROG: unable to create ${BINDIR}/lib directory" >&2
+    exit 1
+fi
 
 nfail=0
 SCRIPTLIST=`cat ${SCRIPTDIR}/.scriptlist`

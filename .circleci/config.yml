@@ -24,19 +24,19 @@ jobs:
           command: |
               ./getTZ --dump >./zoneinfo
               install_zoneinfo=false
-              if [ ! -f .zoneinfo ] ; then
-                  echo "Installing missing .zoneinfo"
+              if [ ! -f lib/zoneinfo ] ; then
+                  echo "Installing missing lib/zoneinfo"
                   install_zoneinfo=true
-              elif cmp -s zoneinfo .zoneinfo ; then
-                  echo ".zoneinfo is up-to-date"
+              elif cmp -s zoneinfo lib/zoneinfo ; then
+                  echo "lib/zoneinfo is up-to-date"
               else
-                  echo "Installing newer .zoneinfo"
+                  echo "Installing newer lib/zoneinfo"
                   install_zoneinfo=true
               fi
               if $install_zoneinfo ; then
-                  mv zoneinfo .zoneinfo
-                  git add .zoneinfo
-                  git commit -m 'Updated .zoneinfo'
+                  mv zoneinfo lib/zoneinfo
+                  git add lib/zoneinfo
+                  git commit -m 'Updated lib/zoneinfo'
                   mkdir -p ~/.ssh/
                   echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
                   git push origin HEAD:master

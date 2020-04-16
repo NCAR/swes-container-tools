@@ -104,6 +104,8 @@ HELP_TEXT="
             which allows the output to be evaluated to set shell variables.
             Hidden secrets are displayed without quotes as
                 <parmname>=-
+            Blank secrets are displayed without quotes as
+                <parmname>=
             Note that if the \"-l\" form is used, an argument is required.
             All arguments can be abbreviated to any leading substring (e.g.,
             \"n\", \"na\", \"nam\", and \"name\" are all valid alternatives to
@@ -174,8 +176,8 @@ SCRIPTDIR=`cd \`dirname $0\`; pwd`
 #
 # Process command line
 #
-. $SCRIPTDIR/.parmdb-getopts.rc
-. $SCRIPTDIR/.parmdb-cmdline.rc
+. $SCRIPTDIR/lib/parmdb-getopts.rc
+. $SCRIPTDIR/lib/parmdb-cmdline.rc
 
 if [ $MODE = h ] ; then
     cat <<EOF
@@ -486,8 +488,8 @@ for parm in ${PARM_LIST} ; do
                 names)
                     echo "${parm}" ;;
                 values)
+                    eval is_secret=\"\${IS_SECRET_${parm}}\"
                     if [ -s "${parmfile}" ] ; then
-                        eval is_secret=\"\${IS_SECRET_${parm}}\"
                         if [ ":$is_secret" = ":y" ] ; then
                             outval="-"
                         else
@@ -495,7 +497,11 @@ for parm in ${PARM_LIST} ; do
                             outval="'${escval}'"
                         fi
                     else
-                        outval="''"
+                        if [ ":$is_secret" = ":y" ] ; then
+                            outval=""
+                        else
+                            outval="''"
+                        fi
                     fi
                     echo "${parm}=${outval}" ;;
 

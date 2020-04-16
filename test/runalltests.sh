@@ -5,10 +5,13 @@ TESTS="
   test-getTZ.sh
   test-parmdb-cmdline.sh
   test-parmdb.sh
+  test-parmdb.sh
+  test-define-parms.sh
   test-mysql.sh
   test-check-mysql.sh
   test-inject-parms.sh
   test-load-certs.sh
+  test-load-runtime-parms.sh
 "
 TESTDIR=`cd \`dirname $0\`; pwd`
 

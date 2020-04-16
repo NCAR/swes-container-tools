@@ -7,7 +7,7 @@ USAGE1="$PROG [timezone]"
 USAGE2="$PROG --dump"
 USAGE3="$PROG -h|--help"
 TZDIR=/usr/share/zoneinfo
-TZBACKUP=${SCRIPTDIR}/.zoneinfo
+TZBACKUP=${SCRIPTDIR}/lib/zoneinfo
 HELP_TEXT="
         Given a timezone name as they appear under $TZDIR, (e.g.
         \"America/Denver\"), convert the timezone to the short format suitable
@@ -18,7 +18,7 @@ HELP_TEXT="
         will be written to standard output.
 
         If the host does not have a ${TZDIR} directory (e.g. the \"alpine\"
-        distribution does not), the file \".zoneinfo\" will be used instead;
+        distribution does not), the file \"lib/zoneinfo\" will be used instead;
         this file can be generated on a host with a $TZDIR directory using
         the --dump option.
 "

@@ -1,0 +1,131 @@
+#!/bin/sh
+PROG=define-parms
+DESC="Process .rc files containing parameter definitions"
+USAGE1="$PROG rcfile..."
+USAGE2="$PROG -h|--help"
+HELP_TEXT="
+        Given one or more .rc files containing valid Bourne-shell-compatible
+        commands, evaluate (source) the files, which can contain the following
+        \"special\" commands:
+
+            param parm=value
+            secret parm=value
+            const parm=value
+        
+        These commands are shell functions that run \"parmdb --put\",
+        \"parmdb --secret --put\", and \"parmdb --constant --put\",
+        respectively, to define a parmdb parameter, and that then set a shell
+        variable with the given parameter name to the value of the parameter.
+
+        Note that since the .rc files are sourced using /bin/sh, the files
+        can contain any valid shell commands, so the values can be defined
+        using parameter expansion, command expansion, etc.
+
+EXAMPLES
+        Given an .rc file containing the following lines:
+          
+          myfile=filea
+          const dir=/tmp
+          param myfile=$dir/$myfile
+          secret mysecret=
+
+        the parmdb \"database\" would contain a constant parameter called
+        \"dir\" with the value \"/tmp\", a normal parameter called \"myfile\"
+        with the value \"/tmp/filea\", and a secret called \"mysecret\" with a
+        null value.
+"
+USAGE="Usage:
+    $USAGE1
+    $USAGE2
+"
+
+case $1 in
+    -h|--help)
+        cat <<EOF
+NAME
+        ${PROG} - $DESC
+
+SYNOPSIS
+        $USAGE1
+        $USAGE2
+
+DESCRIPTION$HELP_TEXT
+
+EOF
+        exit 0 ;;
+    -*)
+        echo "$PROG: unknown option: $1" >&2
+        echo "$USAGE" >&2
+        exit 1 ;;
+esac
+
+if [ $# = 0 ] ; then
+    echo "$PROG: expecting one or more file arguments" >&2
+    echo "$USAGE" >&2
+    exit 1
+fi
+
+if [ ":$PARM_DB" = ":" ] ; then
+    echo "$PROG: PARM_DB environment variable must be set" >&2
+    exit 1
+fi
+if [ ! -d "$PARM_DB" ] ; then
+    echo "PARM_DB does not identify a directory (PARM_DB=$PARM_DB)" >&2
+    exit 1
+fi
+
+param () {
+    arg="$*"
+    parm=`expr "${arg}" : '\([A-Za-z][A-Za-z0-9_]*\)=.*'`
+    if [ ":$parm" != ":" ] ; then
+        val=`expr "${arg}" : '[A-Za-z][A-Za-z0-9_]*=\(.*\)'`
+        parmdb -p "${parm}=${val}"
+        eval "${parm}=\"\${val}\""
+    else
+        echo "Syntax error: expecting parmname=value" >&2
+        echo " -> param $arg" >&2
+        NERRORS=`eval ${NERRORS} + 1`
+    fi
+}
+
+secret () {
+    arg="$*"
+    parm=`expr "${arg}" : '\([A-Za-z][A-Za-z0-9_]*\)=.*'`
+    if [ ":$parm" != ":" ] ; then
+        val=`expr "${arg}" : '[A-Za-z][A-Za-z0-9_]*=\(.*\)'`
+        parmdb --secret -p "${parm}=${val}"
+        eval "${parm}=\"\${val}\""
+    else
+        echo "Syntax error: expecting parmname=value" >&2
+        echo " -> param $arg" >&2
+        NERRORS=`eval ${NERRORS} + 1`
+    fi
+}
+
+const () {
+    arg="$*"
+    parm=`expr "${arg}" : '\([A-Za-z][A-Za-z0-9_]*\)=.*'`
+    if [ ":$parm" != ":" ] ; then
+        val=`expr "${arg}" : '[A-Za-z][A-Za-z0-9_]*=\(.*\)'`
+        parmdb --constant -p "${parm}=${val}"
+        eval "${parm}=\"\${val}\""
+    else
+        echo "Syntax error: expecting parmname=value" >&2
+        echo " -> param $arg" >&2
+        NERRORS=`eval ${NERRORS} + 1`
+    fi
+}
+
+NERRORS=0
+for rcfile in "$@" ; do
+    if [ ! -f "$1" ] ; then
+        echo "$rcfile: no such file" >&2
+        NERRORS=`expr $NERRORS + 1`
+    else
+        . $rcfile
+    fi
+done
+
+exit $NERRORS
+
+
