@@ -14,4 +14,16 @@ The repo also contains an AWS cli zip file and portable `jq` binary. The
 `install-tools` script will install the `aws` cli util and `jq` along with
 the portable scripts.
 
+The recommended way to make the tools in this repo available in a Docker image
+is to include the following in the Dockerfile:
+
+```
+ADD https://api.github.com/repos/NCAR/swes-container-tools/git/refs/heads/master swes-container-tools-version.json
+RUN cd /usr/local ; \
+    git clone https://github.com/NCAR/swes-container-tools.git ; \
+    swes-container-tools/install-tools /usr/local/bin
+```
+
+The `ADD` commands will invalidate the docker build cache if the repo has
+been updated since the last build. The `RUN` command will install the tools.
 

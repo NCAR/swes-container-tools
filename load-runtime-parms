@@ -3,21 +3,38 @@ PROG=load-runtime-parms
 DESC="Load parameters from the environment, from files, and/or from AWS S3"
 USAGE1="$PROG [-h|--help]"
 HELP_TEXT="
-        This script is meant to be used in a container at runtime to load
-        configuration parameters and secrets from the environment, from
-        files, and/or from AWS S3. Parameters are stored using the parmdb
-        script.
+        This script is meant to be run from a container's \"ENTRYPOINT\"
+        script to load configuration parameters and secrets from the
+        environment, from files, and/or from AWS S3. Parameters are managed
+        by the \"parmdb\" script.
 
-        The environment is first checked for defined parameters and loaded
-        using \"parmdb --load-env\". Note that if the AWS's Parameter Store
-        is used to inject parameters, they will generally be defined via
-        the environment; this is the recommended way to inject secrets into
-        a service running on AWS.
+        Incoming parameter values can be stored in files in one of two ways:
+        in a file/object with a .cnf suffix, or in a file/object having the
+        name of a parameter. In the case of a .cnf file, any number of
+        parameter definitions appear in the file using shell-like
+        \"assignment\" statements of the form \"parmname=value\". These files
+        are loaded using \"parmdb --load-assignments=file\". In the case of
+        files having parameter names, each file defines one parameter, and the
+        entire file content defines the parameter value; these files are
+        loaded using \"parmdb --load-file=file\". Refer to the parmdb script
+        for more details.
 
-        If the environment variable (or parameter) AWS_S3_BUCKET is defined,
-        parameters are assumed to be stored on Amazon S3 under the given
-        bucket name. All files in the \$AWS_S3_BUCKET bucket are recursively
-        copied to \${SECRETS_DIR}/${APPNAME}/s3/.
+        When $PROG runs, it first checks the environment for defined parameters
+        using \"parmdb --load-env\". The environment MUST contain the PARM_DB
+        variable, and should contain the RUN_ENV variable (see ENVIRONMENT
+        below). Note that if the AWS's Parameter Store is used to inject
+        parameters, they will generally be defined via the environment; this
+        is the recommended way to inject secrets into a service running on AWS.
+
+        If the RUN_ENV environment variable is set and a file called
+        \"./\${RUN_ENV}.cnf\" is found, the file is assumed to contain default
+        parameters assignments; \"parmdb --load-assignments\" is used to load
+        these defaults from the file.
+
+        Next, if the environment variable (or parameter) AWS_S3_BUCKET is
+        defined, parameters are assumed to be stored on Amazon S3 under the
+        given bucket name. All files in the \$AWS_S3_BUCKET bucket are
+        recursively copied to \${SECRETS_DIR}/${APPNAME}/s3/.
 
         Note that the \${SECRETS_DIR} directory is generally assumed to be part
         of a non-persistent file-system, and is expected to be available even
@@ -28,20 +45,16 @@ HELP_TEXT="
         from the \${SECRETS_DIR} directory and the \${SECRETS_DIR}/\${APPNAME}
         tree.
 
-        Parameters can be stored in files in one of two ways: in a file/object
-        with a .cnf suffix, or in a file/object having the name of a parameter.
-        In the case of a .cnf file, any number of parameter definitions appear
-        in the file using shell-like \"assignment\" statements of the form
-        \"parmname=value\". These files are loaded using \"parmdb
-        --load-assignments=file\". In the case of files having parameter names,
-        each file defines one parameter, and the entire file content defines
-        the parameter value; these files are loaded using \"parmdb
-        --load-file=file\". Refer to the parmdb script for more details.
 
 ENVIRONMENT
       PARM_DB
           The directory containing the parmdb \"object database\". This is
           required.
+
+      RUN_ENV
+          The runtime/deployment environment (e.g. "dev", "prod", etc.). The
+          $PROG script will look for a file called \"./\${RUN_ENV}.cnf\"
+          when it starts. While not required, this should generally be set.
 
       SECRETS_DIR
           A directory containing secrets and downloaded runtime parameter
@@ -117,6 +130,10 @@ for parm in SECRETS_DIR APPNAME ; do
     fi
 done
 $errcheck
+
+if [ ":${RUN_ENV}" != ":" ] && [ -f "./${RUN_ENV}.cnf" ] ; then
+    ${SCRIPTDIR}/parmdb --load-assignments="./${RUN_ENV}.cnf" || exit 1
+fi
 
 if [ ":${AWS_S3_BUCKET}" = ":" ] ; then
     AWS_S3_BUCKET=`${SCRIPTDIR}/parmdb --get=AWS_S3_BUCKET`
