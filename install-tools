@@ -55,7 +55,7 @@ SCRIPTLIST=`cat ${SCRIPTDIR}/.scriptlist`
 for script in $SCRIPTLIST ; do
     if [ ":$script" != ":" ] ; then
         err=y
-        cp ${SCRIPTDIR}/${script} ${BINDIR}
+        cp ${SCRIPTDIR}/${script} ${BINDIR}/${script}
         if [ $? = 0 ] ; then
             chmod +x ${BINDIR}/${script}
             if [ $? = 0 ] ; then
