@@ -74,7 +74,6 @@ if [ ":$MYSQL" = ":" ] && [ ":$1" != ":--help" ] ; then
 fi
 
 DBPORT="${DBPORT:-$DBPORT_DFLT}"
-MYSQL_DATABASE=${MYSQL_DATABASE:-${DBNAME}}
 MYCNF=/tmp/mysql$$.cnf
 
 case $1 in
@@ -103,6 +102,7 @@ if [ ":$PARM_DB" != ":" ] ; then
         eval "$var=\"\${val}\""
     done
 fi
+MYSQL_DATABASE=${MYSQL_DATABASE:-${DBNAME}}
 for var in DBLOGIN DBHOST DBPASSWORD MYSQL_DATABASE ; do
     eval val="\"\${$var}\""
     if [ ":$val" = ":" ] ; then
