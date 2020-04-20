@@ -165,6 +165,7 @@ for infile in ${infiles} ; do
         echo "$EOFMARK"
     fi
 done >>$TMPFILE
+chmod +x $TMPFILE
 
 ${SCRIPTDIR}/parmdb --run $TMPFILE
 rc=$?
