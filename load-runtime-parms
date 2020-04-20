@@ -19,17 +19,19 @@ HELP_TEXT="
         loaded using \"parmdb --load-file=file\". Refer to the parmdb script
         for more details.
 
-        When $PROG runs, it first checks the environment for defined parameters
-        using \"parmdb --load-env\". The environment MUST contain the PARM_DB
-        variable, and should contain the RUN_ENV variable (see ENVIRONMENT
-        below). Note that if the AWS's Parameter Store is used to inject
-        parameters, they will generally be defined via the environment; this
-        is the recommended way to inject secrets into a service running on AWS.
+        When $PROG runs, it first checks the environment for the PARM_DB and
+        RUN_ENV environment variables. PARM_DB MUST be set.
 
         If the RUN_ENV environment variable is set and a file called
         \"./\${RUN_ENV}.cnf\" is found, the file is assumed to contain default
         parameters assignments; \"parmdb --load-assignments\" is used to load
         these defaults from the file.
+
+        $PROG then checks the environment for defined \"parmdb\" parameters
+        using \"parmdb --load-env\". Note that if the AWS's Parameter Store is
+        used to inject parameters, they will generally be defined via the
+        environment; this is the recommended way to inject secrets into a
+        service running on AWS.
 
         Next, if the environment variable (or parameter) AWS_S3_BUCKET is
         defined, parameters are assumed to be stored on Amazon S3 under the
@@ -111,10 +113,18 @@ if [ ":$PARM_DB" = ":" ] ; then
     echo "$PROG: environment variable PARM_DB must be set" >&2
     exit 1
 fi
+
+# Normalize the PARM_DB path
 cd "${PARM_DB}" || exit 1
 PARM_DB=`pwd`
 cd "${BASE_DIR}" || exit 1
 
+# Initialize non-secret defaults
+if [ ":${RUN_ENV}" != ":" ] && [ -f "./${RUN_ENV}.cnf" ] ; then
+    ${SCRIPTDIR}/parmdb --load-assignments="./${RUN_ENV}.cnf" || exit 1
+fi
+
+# Validate secrets directory component variables
 errcheck=:
 for parm in SECRETS_DIR APPNAME ; do
     eval val="\"\$${parm}\""
@@ -131,10 +141,7 @@ for parm in SECRETS_DIR APPNAME ; do
 done
 $errcheck
 
-if [ ":${RUN_ENV}" != ":" ] && [ -f "./${RUN_ENV}.cnf" ] ; then
-    ${SCRIPTDIR}/parmdb --load-assignments="./${RUN_ENV}.cnf" || exit 1
-fi
-
+# Validate AWS S# bucket variables
 if [ ":${AWS_S3_BUCKET}" = ":" ] ; then
     AWS_S3_BUCKET=`${SCRIPTDIR}/parmdb --get=AWS_S3_BUCKET`
     if [ ":${AWS_S3_BUCKET}" != ":" ] ; then
@@ -172,15 +179,18 @@ if [ ":${AWS_S3_BUCKET}" != ":" ] ; then
     done
 fi
 
+# Load parameter values from the environment
 ${SCRIPTDIR}/parmdb --load-env || exit 1
 
 
+# Load parameter values from AWS S3 if indicated
 if [ ":${AWS_S3_BUCKET}" != ":" ] ; then
     mkdir -p "${SECRETS_DIR}/${APPNAME}/s3"
     aws s3 cp "${AWS_S3_BUCKET}" "${SECRETS_DIR}/${APPNAME}/s3" --recursive ||
         exit 1
 fi
 
+# Process all .cnf files in the secrets tree
 if [ -d "${SECRETS_DIR}/${APPNAME}" ] ; then
     SecretsDirs="${SECRETS_DIR} `find ${SECRETS_DIR}/${APPNAME} -type d -print`"
 else
@@ -199,6 +209,7 @@ for dir in ${SecretsDirs} ; do
     cd "${BASE_DIR}" || exit 1
 done
 
+# Process all parameter files in the secrets tree
 for dir in ${SecretsDirs} ; do
     cd "${dir}" || exit 1
 
