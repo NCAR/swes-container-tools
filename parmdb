@@ -206,8 +206,6 @@ then
     exit 1
 fi
 
-RUN_DIR=`pwd` || exit 1
-
 #
 # Do the real work. Because we can't depend on shell functions being available,
 # we structure our code unusually. We determine what needs to be done first
