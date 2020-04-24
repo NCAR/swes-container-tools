@@ -10,9 +10,9 @@ All scripts support the "--help" command-line flag for displaying help.
 You can see a list of all current scripts and their help documentation on the
 [wiki](https://github.com/NCAR/swes-container-tools/wiki).
 
-The repo also contains an AWS cli zip file and portable `jq` binary. The
-`install-tools` script will install the `aws` cli util and `jq` along with
-the portable scripts.
+The repo also contains an AWS cli zip file. The `install-tools` script will
+install the `aws` cli utility along with the portable scripts. (Note: this
+distro of `aws` won't actually run under alpine.)
 
 The recommended way to make the tools in this repo available in a Docker image
 is to include the following in the Dockerfile:
