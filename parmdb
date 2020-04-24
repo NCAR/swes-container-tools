@@ -159,6 +159,9 @@ EXAMPLES
              .
              .
           $ exec parmdb --run myapp
+
+SEE ALSO
+        define-parms, inject-parms, load-runtime-parms
 "
 ALL_USAGES="
         $USAGE1
