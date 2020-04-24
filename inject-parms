@@ -8,7 +8,7 @@ HELP_TEXT="
         files at runtime. Specifically, given one or more input files
         containing parameter reference strings (e.g. \"\$parmname\" or
         \"\${parmname}\"), and/or command interpolation strings of the form
-        \"\`command\'\", $PROG will replace the reference strings with
+        \"\`command\`\", $PROG will replace the reference strings with
         parameter values or command output, respectively, and write an output
         file for each input file. Substitutions are processed internally
         using a shell here-document and shell variables.
@@ -32,8 +32,11 @@ HELP_TEXT="
         need to use shell backslash escapes on \"\$\" or \"\`\" characters if
         you need to preserve them.
 
+        Note also that the script does not usually react well to binary input
+        files.
+
 PORTABILITY
-        This script uses the \"here-document\" internally to handle parameter
+        This script uses a sh \"here-document\" internally to handle parameter
         and command substitution. In at least some versions of the ash shell
         under alpine, if a substituted command produces no input and is alone
         on a line, the entire line will be removed; furthermore, if that line
