@@ -50,6 +50,7 @@ jobs:
                   alpine:latest \
                   debian:oldstable \
                   debian:stable \
+                  debian:buster-slim \
                   centos:centos7 \
                   centos:centos8 \
               ; do
@@ -86,5 +87,7 @@ workflows:
       - build:
           context: sweg
           filters:
+            tags:
+              only: /^\d+\.\d+\.\d+([-+].*)?$/
             branches:
               only: /.*/
