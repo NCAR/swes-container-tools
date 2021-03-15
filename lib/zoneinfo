@@ -24,7 +24,7 @@ Africa/Freetown GMT0
 Africa/Gaborone CAT-2
 Africa/Harare CAT-2
 Africa/Johannesburg SAST-2
-Africa/Juba EAT-3
+Africa/Juba CAT-2
 Africa/Kampala EAT-3
 Africa/Khartoum CAT-2
 Africa/Kigali CAT-2
@@ -100,7 +100,7 @@ America/Creston MST7
 America/Cuiaba <-04>4
 America/Curacao AST4
 America/Danmarkshavn GMT0
-America/Dawson PST8PDT
+America/Dawson MST7
 America/Dawson_Creek MST7
 America/Denver MST7MDT
 America/Detroit EST5EDT
@@ -173,6 +173,7 @@ America/Noronha <-02>2
 America/North_Dakota/Beulah CST6CDT
 America/North_Dakota/Center CST6CDT
 America/North_Dakota/New_Salem CST6CDT
+America/Nuuk <-03>3<-02>
 America/Ojinaga MST7MDT
 America/Panama EST5
 America/Pangnirtung EST5EDT
@@ -214,14 +215,14 @@ America/Toronto EST5EDT
 America/Tortola AST4
 America/Vancouver PST8PDT
 America/Virgin AST4
-America/Whitehorse PST8PDT
+America/Whitehorse MST7
 America/Winnipeg CST6CDT
 America/Yakutat AKST9AKDT
 America/Yellowknife MST7MDT
-Antarctica/Casey <+08>-8
+Antarctica/Casey <+11>-11
 Antarctica/Davis <+07>-7
 Antarctica/DumontDUrville <+10>-10
-Antarctica/Macquarie <+11>-11
+Antarctica/Macquarie AEST-10AEDT
 Antarctica/Mawson <+05>-5
 Antarctica/McMurdo NZST-12NZDT
 Antarctica/Palmer <-03>3
@@ -378,7 +379,7 @@ Canada/Mountain MST7MDT
 Canada/Newfoundland NST3:30NDT
 Canada/Pacific PST8PDT
 Canada/Saskatchewan CST6
-Canada/Yukon PST8PDT
+Canada/Yukon MST7
 Chile/Continental <-04>4<-03>
 Chile/EasterIsland <-06>6<-05>
 Cuba CST5CDT
@@ -480,7 +481,7 @@ Europe/Vaduz CET-1CEST
 Europe/Vatican CET-1CEST
 Europe/Vienna CET-1CEST
 Europe/Vilnius EET-2EEST
-Europe/Volgograd <+04>-4
+Europe/Volgograd <+03>-3
 Europe/Warsaw CET-1CEST
 Europe/Zagreb CET-1CEST
 Europe/Zaporozhye EET-2EEST
